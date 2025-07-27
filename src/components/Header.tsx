@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, MessageSquare } from "lucide-react";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const navItems = [
     { label: "Fonctionnalités", href: "#features" },
@@ -39,10 +41,10 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
               Connexion
             </Button>
-            <Button variant="hero" size="sm">
+            <Button variant="hero" size="sm" onClick={() => navigate('/register')}>
               Essai gratuit
             </Button>
           </div>
@@ -75,10 +77,10 @@ const Header = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
                   Connexion
                 </Button>
-                <Button variant="hero" size="sm">
+                <Button variant="hero" size="sm" onClick={() => navigate('/register')}>
                   Essai gratuit
                 </Button>
               </div>

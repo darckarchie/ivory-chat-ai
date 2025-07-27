@@ -1,7 +1,10 @@
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Bot, TrendingUp } from "lucide-react";
 
 const Hero = () => {
+  const navigate = useNavigate();
+  
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-gradient-hero overflow-hidden">
       {/* Animated background elements */}
@@ -56,10 +59,10 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 animate-fade-in">
-            <Button size="xl" variant="accent" className="min-w-[200px]">
+            <Button size="xl" variant="accent" className="min-w-[200px]" onClick={() => navigate('/register')}>
               Commencer l'essai gratuit
             </Button>
-            <Button size="xl" variant="outline" className="min-w-[200px] bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20">
+            <Button size="xl" variant="outline" className="min-w-[200px] bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20" onClick={() => navigate('/login')}>
               Voir le dashboard
             </Button>
           </div>
