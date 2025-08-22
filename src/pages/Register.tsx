@@ -53,7 +53,7 @@ const Register = () => {
       isAuthenticated: true
     };
     setUser(user);
-    navigate('/dashboard');
+    navigate(`/onboarding?sector=${selectedSector}`);
   };
   const handleDefaultChoice = () => {
     if (!formData) return;
@@ -67,7 +67,7 @@ const Register = () => {
       isAuthenticated: true
     };
     setUser(user);
-    navigate('/dashboard');
+    navigate('/onboarding?sector=commerce');
   };
   const sectorOptions = [{
     id: 'restaurant' as BusinessSector,
@@ -128,7 +128,12 @@ const Register = () => {
               {/* Search */}
               <div className="relative max-w-md mx-auto mb-8">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                
+                <Input
+                  placeholder="Rechercher un secteur ou une fonctionnalité…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
               </div>
             </motion.div>
 

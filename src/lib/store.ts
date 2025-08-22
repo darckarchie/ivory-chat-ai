@@ -11,6 +11,15 @@ export interface User {
   businessName: string
   businessSector: BusinessSector
   isAuthenticated: boolean
+  onboardingComplete?: boolean
+  whatsappSettings?: {
+    autoReply: boolean
+  }
+  assistantSettings?: {
+    style: 'poli' | 'energique' | 'pro'
+    language: 'fr' | 'en' | 'auto'
+    useTu: boolean
+  }
 }
 
 interface UserState {
