@@ -93,6 +93,14 @@ const Register = () => {
     benefits: ['Devis en 2 clics', 'Planning automatique', 'Suivi client pro'],
     keywords: ['services', 'consulting', 'rendez-vous', 'devis', 'planning'],
     isPopular: false
+  }, {
+    id: 'hospitality' as BusinessSector,
+    title: 'Hôtellerie & Réservations',
+    description: 'Gérez vos réservations en automatique',
+    icon: '🏨',
+    benefits: ['Réservations 24/7', 'Gestion des chambres', 'Check-in automatique'],
+    keywords: ['hôtel', 'réservation', 'chambre', 'hébergement', 'tourisme'],
+    isPopular: false
   }];
   const filteredSectors = useMemo(() => {
     if (!searchQuery) return sectorOptions;
