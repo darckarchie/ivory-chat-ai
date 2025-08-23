@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -53,33 +53,39 @@ const OnboardingFlow = ({ prefillSector }: OnboardingFlowProps) => {
   };
 
   // Step 1: Profile Form
+  const profileDefaults = useMemo<ProfileData>(() => ({
+    businessName: user?.businessName || "",
+    sector: prefillSector,
+    country: "Côte d'Ivoire",
+    currency: "FCFA",
+  }), [user?.businessName, prefillSector]);
+
   const profileForm = useForm<ProfileData>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      businessName: user?.businessName || "",
-      sector: prefillSector,
-      country: "Côte d'Ivoire",
-      currency: "FCFA"
-    }
+    defaultValues: profileDefaults,
   });
 
-  // Step 2: WhatsApp Form  
+  // Step 2: WhatsApp Form
+  const whatsappDefaults = useMemo<WhatsAppData>(() => ({
+    phone: user?.phone || "+225",
+    autoReply: true,
+  }), [user?.phone]);
+
   const whatsappForm = useForm<WhatsAppData>({
     resolver: zodResolver(whatsappSchema),
-    defaultValues: {
-      phone: user?.phone || "+225",
-      autoReply: true
-    }
+    defaultValues: whatsappDefaults,
   });
 
   // Step 3: Assistant Form
+  const assistantDefaults = useMemo<AssistantData>(() => ({
+    style: 'poli',
+    language: 'fr',
+    useTu: true,
+  }), []);
+
   const assistantForm = useForm<AssistantData>({
     resolver: zodResolver(assistantSchema),
-    defaultValues: {
-      style: 'poli',
-      language: 'fr',
-      useTu: true
-    }
+    defaultValues: assistantDefaults,
   });
 
   const onProfileSubmit = (data: ProfileData) => {
