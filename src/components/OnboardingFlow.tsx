@@ -44,7 +44,8 @@ const OnboardingFlow = ({ prefillSector }: OnboardingFlowProps) => {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [whatsappData, setWhatsappData] = useState<WhatsAppData | null>(null);
   const navigate = useNavigate();
-  const { setUser, user } = useUserStore(state => ({ setUser: state.setUser, user: state.user }));
+  const setUser = useUserStore(state => state.setUser);
+  const user = useUserStore(state => state.user);
 
   const sectorLabels = {
     restaurant: 'Restaurant & Alimentation',

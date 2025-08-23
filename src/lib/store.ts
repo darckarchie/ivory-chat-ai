@@ -41,8 +41,9 @@ export const useUserStore = create<UserState>()(
       },
     }),
     {
-      name: 'whalix-user-storage',
+      name: 'whalix-user-v2',
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ user: state.user }),
     }
   )
 )

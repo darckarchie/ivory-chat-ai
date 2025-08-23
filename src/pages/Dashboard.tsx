@@ -6,11 +6,9 @@ import { useUserStore } from '@/lib/store';
 const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, user, logout } = useUserStore(state => ({
-    isAuthenticated: state.isAuthenticated(),
-    user: state.user,
-    logout: state.logout
-  }));
+  const isAuthenticated = useUserStore(state => state.isAuthenticated());
+  const user = useUserStore(state => state.user);
+  const logout = useUserStore(state => state.logout);
 
   useEffect(() => {
     if (!isAuthenticated) {
