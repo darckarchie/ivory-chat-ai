@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { DashboardMetrics, LiveReply, KBItem, SectorId } from "@/lib/types";
 import { getConfig } from "@/lib/utils/sector-config";
 import { QuickMetrics } from "./QuickMetrics";
 import { LiveRepliesFeed } from "./LiveRepliesFeed";
-import { KnowledgeBaseCard } from "./KnowledgeBaseCard";
+import { KnowledgeBasePreview } from "../knowledge-base/KnowledgeBasePreview";
 import { 
   MessageCircle, 
   Settings, 
@@ -115,13 +116,13 @@ export function DashboardMobile({
           </Card>
         </motion.div>
 
-        {/* Knowledge Base */}
+        {/* Knowledge Base - Version améliorée */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <KnowledgeBaseCard
+          <KnowledgeBasePreview
             items={kbItems}
             sector={sector}
             onAddItem={() => onAction('kb-add')}

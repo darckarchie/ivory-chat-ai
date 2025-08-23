@@ -87,8 +87,8 @@ const Dashboard = () => {
   const handleAction = (actionId: string) => {
     switch (actionId) {
       case 'kb-add':
-        // TODO: Ouvrir modal d'ajout
-        console.log('Open add modal');
+        // TODO: Ouvrir modal d'ajout depuis le dashboard
+        navigate('/knowledge-base');
         break;
       case 'kb-manage':
         navigate('/knowledge-base');
