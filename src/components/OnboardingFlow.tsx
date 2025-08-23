@@ -206,16 +206,13 @@ const OnboardingFlow = ({ prefillSector }: OnboardingFlowProps) => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Secteur d'activité</FormLabel>
-                        <Select value={field.value} onValueChange={field.onChange} disabled>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(sectorLabels).map(([key, label]) => (
-                              <SelectItem key={key} value={key}>{label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <Input
+                            value={sectorLabels[field.value as keyof typeof sectorLabels] || field.value}
+                            readOnly
+                            disabled
+                          />
+                        </FormControl>
                       </FormItem>
                     )}
                   />
@@ -227,14 +224,9 @@ const OnboardingFlow = ({ prefillSector }: OnboardingFlowProps) => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Pays</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange} disabled>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Côte d'Ivoire">🇨🇮 Côte d'Ivoire</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormControl>
+                            <Input value={field.value} readOnly disabled />
+                          </FormControl>
                         </FormItem>
                       )}
                     />
@@ -245,14 +237,9 @@ const OnboardingFlow = ({ prefillSector }: OnboardingFlowProps) => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Devise</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange} disabled>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="FCFA">FCFA</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormControl>
+                            <Input value={field.value} readOnly disabled />
+                          </FormControl>
                         </FormItem>
                       )}
                     />
