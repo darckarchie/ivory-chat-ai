@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardMobile } from '@/components/dashboard/DashboardMobile';
+import { AddItemModal } from '@/components/knowledge-base/AddItemModal';
 import { useUserStore, BusinessSector } from '@/lib/store';
 import { useDemoData } from '@/lib/hooks/use-demo-data';
 import { useLiveFeed } from '@/lib/hooks/use-live-feed';
@@ -15,6 +16,8 @@ const Dashboard = () => {
   
   const [sector, setSector] = useState<SectorId>('commerce');
   const [kbItems, setKbItems] = useState<KBItem[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<KBItem | null>(null);
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     orders_today: 0,
     reservations_today: 0,
@@ -84,11 +87,38 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [messages]);
   
+  const handleSaveItem = (itemData: Omit<KBItem, 'id' | 'business_id' | 'created_at' | 'updated_at'>) => {
+    const now = new Date();
+    
+    if (editingItem) {
+      // Modifier un item existant
+      const updatedItems = kbItems.map(item =>
+        item.id === editingItem.id
+          ? { ...item, ...itemData, updated_at: now }
+          : item
+      );
+      setKbItems(updatedItems);
+      localStorage.setItem('whalix_kb_items', JSON.stringify(updatedItems));
+      setEditingItem(null);
+    } else {
+      // Ajouter un nouvel item
+      const newItem: KBItem = {
+        id: `kb_${Date.now()}`,
+        business_id: 'demo',
+        ...itemData,
+        created_at: now,
+        updated_at: now
+      };
+      const updatedItems = [...kbItems, newItem];
+      setKbItems(updatedItems);
+      localStorage.setItem('whalix_kb_items', JSON.stringify(updatedItems));
+    }
+  };
+
   const handleAction = (actionId: string) => {
     switch (actionId) {
       case 'kb-add':
-        // TODO: Ouvrir modal d'ajout depuis le dashboard
-        navigate('/knowledge-base');
+        setShowAddModal(true);
         break;
       case 'kb-manage':
         navigate('/knowledge-base');
@@ -129,6 +159,18 @@ const Dashboard = () => {
         kbItems={kbItems}
         onAction={handleAction}
         onOpenChat={handleOpenChat}
+      />
+      
+      {/* Modal d'ajout/modification d'items */}
+      <AddItemModal
+        isOpen={showAddModal || editingItem !== null}
+        onClose={() => {
+          setShowAddModal(false);
+          setEditingItem(null);
+        }}
+        onSave={handleSaveItem}
+        sector={sector}
+        editItem={editingItem}
       />
       
       {/* Indicateur de connexion */}

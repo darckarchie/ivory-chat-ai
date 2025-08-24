@@ -8,6 +8,8 @@ import { getConfig } from "@/lib/utils/sector-config";
 import { QuickMetrics } from "./QuickMetrics";
 import { LiveRepliesFeed } from "./LiveRepliesFeed";
 import { KnowledgeBasePreview } from "../knowledge-base/KnowledgeBasePreview";
+import { WhatsAppConnectionCard } from "./WhatsAppConnectionCard";
+import { AIResponsePreview } from "./AIResponsePreview";
 import { 
   MessageCircle, 
   Settings, 
@@ -36,6 +38,7 @@ export function DashboardMobile({
 }: DashboardMobileProps) {
   const config = getConfig(sector);
   const waitingMessages = live.filter(m => m.status === 'waiting').length;
+  const [whatsappConnected, setWhatsappConnected] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-subtle pb-20">
@@ -52,6 +55,12 @@ export function DashboardMobile({
               <p className="text-sm text-muted-foreground">{config.label}</p>
             </div>
             <div className="flex items-center gap-2">
+              {whatsappConnected && (
+                <Badge className="bg-green-100 text-green-800 border-green-200">
+                  <Zap className="h-3 w-3 mr-1" />
+                  IA Active
+                </Badge>
+              )}
               {waitingMessages > 0 && (
                 <Badge variant="destructive" className="animate-pulse">
                   {waitingMessages}
@@ -67,11 +76,22 @@ export function DashboardMobile({
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Quick Metrics */}
+        {/* WhatsApp IA Connection */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
+        >
+          <WhatsAppConnectionCard 
+            restaurantId="demo"
+            onStatusChange={setWhatsappConnected}
+          />
+        </motion.div>
+        {/* Quick Metrics */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
         >
           <QuickMetrics metrics={metrics} sector={sector} />
         </motion.div>
@@ -80,7 +100,7 @@ export function DashboardMobile({
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3 }}
         >
           <Card>
             <CardHeader className="pb-3">
@@ -120,7 +140,7 @@ export function DashboardMobile({
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.4 }}
         >
           <KnowledgeBasePreview
             items={kbItems}
@@ -130,11 +150,22 @@ export function DashboardMobile({
           />
         </motion.div>
 
+        {/* AI Response Preview */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15 }}
+        >
+          <AIResponsePreview 
+            isConnected={whatsappConnected}
+            kbItems={kbItems}
+          />
+        </motion.div>
         {/* Quick Actions */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.5 }}
         >
           <Card>
             <CardHeader>
@@ -163,7 +194,7 @@ export function DashboardMobile({
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.6 }}
           >
             <Card className="bg-gradient-primary text-white">
               <CardContent className="p-6">
@@ -192,7 +223,7 @@ export function DashboardMobile({
       <motion.div 
         initial={{ y: 100 }}
         animate={{ y: 0 }}
-        transition={{ delay: 0.6 }}
+        transition={{ delay: 0.7 }}
         className="fixed bottom-0 left-0 right-0 bg-primary/95 backdrop-blur-sm border-t border-primary/20 p-4 z-50"
       >
         <div className="container mx-auto max-w-md">
