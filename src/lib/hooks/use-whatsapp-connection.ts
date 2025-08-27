@@ -15,105 +15,131 @@ export function useWhatsAppConnection(restaurantId: string) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Simuler une connexion Green API
-  const simulateGreenAPIConnection = useCallback(async () => {
+  // Utiliser la vraie API Green API
+  const connectWithGreenAPI = useCallback(async () => {
     setIsConnecting(true);
     setError(null);
     
-    // Étape 1: Connexion en cours
-    setSession({
-      restaurantId,
-      status: 'connecting'
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Étape 2: QR Code généré
-    const qrCodeSVG = `
-      <svg width="256" height="256" xmlns="http://www.w3.org/2000/svg">
-        <rect width="256" height="256" fill="white"/>
-        <rect x="20" y="20" width="216" height="216" fill="none" stroke="black" stroke-width="4"/>
-        <rect x="40" y="40" width="40" height="40" fill="black"/>
-        <rect x="176" y="40" width="40" height="40" fill="black"/>
-        <rect x="40" y="176" width="40" height="40" fill="black"/>
-        <rect x="60" y="60" width="16" height="16" fill="white"/>
-        <rect x="196" y="60" width="16" height="16" fill="white"/>
-        <rect x="60" y="196" width="16" height="16" fill="white"/>
-        <rect x="100" y="100" width="56" height="56" fill="black"/>
-        <rect x="116" y="116" width="24" height="24" fill="white"/>
-        <text x="128" y="140" text-anchor="middle" font-family="Arial" font-size="8" fill="black">WHALIX</text>
-      </svg>
-    `;
-    
-    const qrCodeDataUrl = `data:image/svg+xml;base64,${btoa(qrCodeSVG)}`;
-    
-    setSession({
-      restaurantId,
-      status: 'qr_pending',
-      qrCode: qrCodeDataUrl
-    });
-    
-    setIsConnecting(false);
-    
-    // Étape 3: Simuler la connexion après 15 secondes
-    setTimeout(() => {
+    try {
+      // Étape 1: Connexion en cours
       setSession({
         restaurantId,
-        status: 'connected',
-        phoneNumber: '+225 07 00 00 00 01',
-        lastConnected: new Date(),
-        messageCount: 0
+        status: 'connecting'
       });
       
-      // Simuler des messages entrants
-      startMessageSimulation();
-    }, 15000);
-  }, [restaurantId]);
-  
-  const startMessageSimulation = () => {
-    const demoMessages = [
-      { from: 'Kouamé', text: 'Bonjour, vous êtes ouverts ?' },
-      { from: 'Aminata', text: 'Prix du menu du jour ?' },
-      { from: 'Yao', text: 'Vous livrez à Cocody ?' },
-      { from: 'Fatou', text: 'Je peux commander ?' }
-    ];
-    
-    let messageIndex = 0;
-    const interval = setInterval(() => {
-      if (messageIndex >= demoMessages.length) {
-        clearInterval(interval);
-        return;
+      // Étape 2: Appeler l'API Green API pour obtenir le QR code
+      const response = await fetch(`https://7105.api.green-api.com/waInstance7105309758/qr/a7cfa2ce030c4a6188859f93100b96ecac0137473a3044bfbb`);
+      
+      if (!response.ok) {
+        throw new Error(`Erreur API: ${response.status}`);
       }
       
-      const msg = demoMessages[messageIndex];
-      const newMessage = {
-        id: `demo_msg_${Date.now()}`,
-        at: new Date().toISOString(),
-        customer: msg.from,
-        customer_phone: `+22507000000${messageIndex + 1}`,
-        last_message: msg.text,
-        status: 'waiting' as const,
-        confidence: 0
-      };
+      const data = await response.json();
       
-      // Ajouter au feed local
-      const existingMessages = JSON.parse(localStorage.getItem('whalix_live_messages') || '[]');
-      const updatedMessages = [newMessage, ...existingMessages].slice(0, 20);
-      localStorage.setItem('whalix_live_messages', JSON.stringify(updatedMessages));
+      if (data.type === 'qrCode' && data.message) {
+        // QR Code reçu avec succès
+        setSession({
+          restaurantId,
+          status: 'qr_pending',
+          qrCode: data.message // URL de l'image QR code
+        });
+        
+        // Commencer à vérifier le statut de connexion
+        startStatusPolling();
+      } else {
+        throw new Error('Format de réponse QR invalide');
+      }
       
-      messageIndex++;
-    }, 20000); // Un message toutes les 20 secondes
-  };
+    } catch (err) {
+      console.error('Erreur connexion Green API:', err);
+      setError('Impossible de générer le QR code. Vérifiez votre connexion internet.');
+      setSession({
+        restaurantId,
+        status: 'error',
+        error: 'Erreur de connexion à Green API'
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [restaurantId]);
+
+  // Vérifier le statut de connexion périodiquement
+  const startStatusPolling = useCallback(() => {
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`https://7105.api.green-api.com/waInstance7105309758/getStateInstance/a7cfa2ce030c4a6188859f93100b96ecac0137473a3044bfbb`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.stateInstance === 'authorized') {
+            // WhatsApp connecté avec succès
+            setSession({
+              restaurantId,
+              status: 'connected',
+              phoneNumber: '+225 07 00 00 00 01', // Sera récupéré de l'API
+              lastConnected: new Date(),
+              messageCount: 0
+            });
+            
+            // Arrêter le polling
+            return true;
+          } else if (data.stateInstance === 'blocked') {
+            setSession({
+              restaurantId,
+              status: 'error',
+              error: 'Compte WhatsApp bloqué'
+            });
+            return true;
+          }
+        }
+        
+        return false; // Continuer le polling
+      } catch (err) {
+        console.error('Erreur vérification statut:', err);
+        return false;
+      }
+    };
+    
+    // Vérifier toutes les 3 secondes pendant 2 minutes max
+    let attempts = 0;
+    const maxAttempts = 40; // 2 minutes
+    
+    const interval = setInterval(async () => {
+      attempts++;
+      const shouldStop = await checkStatus();
+      
+      if (shouldStop || attempts >= maxAttempts) {
+        clearInterval(interval);
+        
+        if (attempts >= maxAttempts && session?.status === 'qr_pending') {
+          setSession({
+            restaurantId,
+            status: 'error',
+            error: 'Timeout - QR code expiré. Veuillez réessayer.'
+          });
+        }
+      }
+    }, 3000);
+    
+  }, [restaurantId, session?.status]);
 
   const connect = useCallback(async () => {
-    await simulateGreenAPIConnection();
-  }, [simulateGreenAPIConnection]);
+    await connectWithGreenAPI();
+  }, [connectWithGreenAPI]);
 
   const disconnect = useCallback(async () => {
-    setSession({
-      restaurantId,
-      status: 'disconnected'
-    });
+    try {
+      // Appeler l'API de déconnexion Green API
+      await fetch(`https://7105.api.green-api.com/waInstance7105309758/logout/a7cfa2ce030c4a6188859f93100b96ecac0137473a3044bfbb`);
+      
+      setSession({
+        restaurantId,
+        status: 'disconnected'
+      });
+    } catch (err) {
+      console.error('Erreur déconnexion:', err);
+    }
   }, [restaurantId]);
 
   // Initialiser la session
