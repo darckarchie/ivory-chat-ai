@@ -6,18 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { DashboardMetrics, LiveReply, KBItem, SectorId } from "@/lib/types";
 import { getConfig } from "@/lib/utils/sector-config";
 import { QuickMetrics } from "./QuickMetrics";
-import { LiveRepliesFeed } from "./LiveRepliesFeed";
 import { KnowledgeBasePreview } from "../knowledge-base/KnowledgeBasePreview";
 import { WhatsAppConnectionCard } from "./WhatsAppConnectionCard";
-import { AIResponsePreview } from "./AIResponsePreview";
 import { useState } from "react";
 import { 
   MessageCircle, 
   Settings, 
-  BarChart3,
   Zap,
-  Bell,
-  Menu
+  User,
+  Clock
 } from "lucide-react";
 
 interface DashboardMobileProps {
@@ -89,74 +86,62 @@ export function DashboardMobile({
           />
         </motion.div>
         
-        {/* AI Response Preview - Seulement si connecté */}
-        {whatsappConnected && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-          >
-            <AIResponsePreview 
-              isConnected={whatsappConnected}
-              kbItems={kbItems}
-            />
-          </motion.div>
-        )}
-        
-        {/* Quick Metrics */}
+        {/* Aperçu des conversations WhatsApp */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <QuickMetrics metrics={metrics} sector={sector} />
-        </motion.div>
-
-        {/* Live Messages Feed */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5" />
-                  Messages en direct
-                  {waitingMessages > 0 && (
-                    <Badge variant="destructive" className="animate-pulse">
-                      {waitingMessages}
-                    </Badge>
-                  )}
-                </CardTitle>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => onAction('inbox')}
-                >
-                  Voir tout
-                </Button>
-              </div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <MessageCircle className="h-5 w-5" />
+                Conversations WhatsApp
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <LiveRepliesFeed 
-                messages={live} 
-                onOpenChat={onOpenChat}
-                onQuickReply={(messageId, reply) => {
-                  // Simuler une réponse rapide
-                  console.log('Quick reply:', messageId, reply);
-                }}
-              />
+              {live.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground">
+                    Aucune conversation récente
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {live.slice(0, 5).map((message, index) => (
+                    <div key={message.id} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                      <div className="flex-shrink-0 mt-1">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium truncate">{message.customer}</span>
+                          <span className="text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3 inline mr-1" />
+                            {new Date(message.at).toLocaleTimeString('fr-FR', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground line-clamp-2">
+                          {message.last_message}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Knowledge Base - Version améliorée */}
+        {/* Knowledge Base */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.3 }}
         >
           <KnowledgeBasePreview
             items={kbItems}
@@ -165,104 +150,7 @@ export function DashboardMobile({
             onManageItems={() => onAction('kb-manage')}
           />
         </motion.div>
-
-        {/* Quick Actions */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Actions rapides</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                {config.actions.map((action, index) => (
-                  <Button
-                    key={action.id}
-                    variant="outline"
-                    className="h-12 flex flex-col gap-1"
-                    onClick={() => onAction(action.id)}
-                  >
-                    <span className="text-lg">{getActionIcon(action.icon)}</span>
-                    <span className="text-xs">{action.label}</span>
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Revenue Card (si applicable) */}
-        {metrics.revenue_today > 0 && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-          >
-            <Card className="bg-gradient-primary text-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white/80 text-sm">Chiffre d'affaires aujourd'hui</p>
-                    <p className="text-2xl font-bold">
-                      {metrics.revenue_today.toLocaleString()} FCFA
-                    </p>
-                    {metrics.vs_yesterday?.revenue && (
-                      <p className="text-white/80 text-sm mt-1">
-                        {metrics.vs_yesterday.revenue > 0 ? '+' : ''}
-                        {(metrics.vs_yesterday.revenue * 100).toFixed(0)}% vs hier
-                      </p>
-                    )}
-                  </div>
-                  <BarChart3 className="h-8 w-8 text-white/80" />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
       </div>
 
-      {/* Fixed CTA Bar */}
-      <motion.div 
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        transition={{ delay: 0.7 }}
-        className="fixed bottom-0 left-0 right-0 bg-primary/95 backdrop-blur-sm border-t border-primary/20 p-4 z-50"
-      >
-        <div className="container mx-auto max-w-md">
-          <Button 
-            size="lg" 
-            className="w-full bg-white text-primary hover:bg-white/90 shadow-lg"
-            onClick={() => onAction('inbox')}
-          >
-            <MessageCircle className="h-5 w-5 mr-2" />
-            Répondre aux clients
-            {waitingMessages > 0 && (
-              <Badge className="ml-2 bg-red-500 text-white">
-                {waitingMessages}
-              </Badge>
-            )}
-          </Button>
-        </div>
-      </motion.div>
     </div>
   );
-}
-
-function getActionIcon(iconName: string) {
-  const icons: Record<string, string> = {
-    'receipt': '🧾',
-    'plus': '➕',
-    'clock': '🕐',
-    'package': '📦',
-    'calendar': '📅',
-    'file-text': '📄',
-    'calendar-days': '📆',
-    'book': '📖',
-    'calendar-check': '✅'
-  };
-  
-  return icons[iconName] || '📋';
-}
