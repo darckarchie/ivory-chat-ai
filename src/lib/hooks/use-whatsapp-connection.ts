@@ -137,3 +137,4 @@ export function useWhatsAppConnection(restaurantId: string) {
     connect,
     disconnect
   };
+}
