@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { greenAPIService } from '@/lib/services/green-api-service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,39 +33,11 @@ export function AIResponsePreview({ isConnected, kbItems }: AIResponsePreviewPro
     // Simuler un délai de génération
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    const lowerMessage = message.toLowerCase();
-    let response = '';
-    let conf = 0;
+    // Utiliser le service Green API pour générer la réponse
+    const aiResponse = await greenAPIService.generateAIResponse(message, kbItems);
     
-    if (lowerMessage.includes('bonjour') || lowerMessage.includes('salut')) {
-      response = 'Bonjour ! 👋 Bienvenue chez nous. Comment puis-je vous aider aujourd\'hui ?';
-      conf = 0.95;
-    } else if (lowerMessage.includes('prix') || lowerMessage.includes('menu')) {
-      if (kbItems.length > 0) {
-        response = `📋 NOTRE MENU :\n\n${kbItems.slice(0, 3).map((item, idx) => 
-          `${idx + 1}. ${item.name} - ${item.price.toLocaleString()} FCFA`
-        ).join('\n')}\n\nPour commander, envoyez le numéro du plat !`;
-        conf = 0.90;
-      } else {
-        response = 'Notre menu est en cours de mise à jour. Contactez-nous directement pour plus d\'informations.';
-        conf = 0.70;
-      }
-    } else if (lowerMessage.includes('ouvert') || lowerMessage.includes('horaire')) {
-      response = '🕐 HORAIRES D\'OUVERTURE :\n\n📍 Lundi - Samedi : 8h - 22h\n📍 Dimanche : 10h - 20h\n\nNous sommes actuellement ouverts !';
-      conf = 0.95;
-    } else if (lowerMessage.includes('livr')) {
-      response = '🚗 LIVRAISON DISPONIBLE !\n\n✅ Zone : 5km autour du restaurant\n⏱️ Délai : 30-45 minutes\n💵 Frais : 1000 FCFA\n\nPour commander, choisissez vos plats !';
-      conf = 0.90;
-    } else if (lowerMessage.includes('command')) {
-      response = '📝 POUR COMMANDER :\n\n1️⃣ Choisissez vos plats\n2️⃣ Confirmez votre adresse\n3️⃣ Choisissez le mode de paiement\n\nQue souhaitez-vous commander ?';
-      conf = 0.85;
-    } else {
-      response = 'Merci pour votre message ! 😊 Un de nos agents va vous répondre rapidement. En attendant, vous pouvez consulter notre menu ou nos horaires.';
-      conf = 0.60;
-    }
-    
-    setAiResponse(response);
-    setConfidence(conf);
+    setAiResponse(aiResponse.message);
+    setConfidence(aiResponse.confidence);
     setIsGenerating(false);
   };
 

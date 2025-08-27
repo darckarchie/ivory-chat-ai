@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { greenAPIService } from '@/lib/services/green-api-service';
 import { LiveReply } from '../types';
 
 export function useLiveFeed(businessId: string) {
@@ -16,6 +17,32 @@ export function useLiveFeed(businessId: string) {
           setMessages(localMessages);
           setError(null);
           return;
+        }
+        
+        // Essayer de récupérer les messages depuis Green API
+        try {
+          const incomingMessages = await greenAPIService.getIncomingMessages();
+          if (incomingMessages.length > 0) {
+            const newMessages = incomingMessages.map(msg => ({
+              id: msg.id,
+              at: new Date(msg.timestamp * 1000).toISOString(),
+              customer: msg.pushName || 'Client',
+              customer_phone: msg.from,
+              last_message: msg.text,
+              status: 'waiting' as const,
+              confidence: 0
+            }));
+            
+            setMessages(prev => {
+              const existing = prev.map(m => m.id);
+              const filtered = newMessages.filter(m => !existing.includes(m.id));
+              const updated = [...filtered, ...prev].slice(0, 20);
+              localStorage.setItem('whalix_live_messages', JSON.stringify(updated));
+              return updated;
+            });
+          }
+        } catch (apiError) {
+          console.log('Green API non disponible, utilisation du mode démo');
         }
       }
 

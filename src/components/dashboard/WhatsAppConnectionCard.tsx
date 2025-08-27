@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useWhatsAppConnection } from '@/lib/hooks/use-whatsapp-connection';
+import { useGreenAPI } from '@/lib/hooks/use-green-api';
 import { 
   MessageSquare, 
   QrCode, 
@@ -32,11 +32,11 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
     isConnected, 
     hasQR, 
     isLoading, 
-    error, 
-    connect, 
+    messages,
+    generateQR, 
     disconnect,
     sendTestMessage 
-  } = useWhatsAppConnection(restaurantId);
+  } = useGreenAPI();
   
   const [testPhone, setTestPhone] = useState('+225');
   const [testMessage, setTestMessage] = useState('');
@@ -103,7 +103,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
   };
 
   const renderConnectionStatus = () => {
-    if (!session || session.status === 'idle') {
+    if (session.status === 'idle') {
       return (
         <div className="text-center py-6">
           <div className="bg-primary/10 p-4 rounded-full w-fit mx-auto mb-4">
@@ -114,7 +114,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
             Activez votre assistant IA pour répondre automatiquement à vos clients 24/7
           </p>
           <Button 
-            onClick={() => connect()}
+            onClick={generateQR}
             disabled={isLoading}
             className="w-full"
             size="lg"
@@ -161,7 +161,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
 
           <Button 
             variant="outline" 
-            onClick={() => connect()}
+            onClick={generateQR}
             className="mt-4"
             size="sm"
           >
@@ -195,9 +195,9 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
             <div className="bg-muted/50 rounded-lg p-3 mb-4">
               <p className="text-xs text-muted-foreground">Numéro connecté</p>
               <p className="font-mono text-sm">{session.phoneNumber}</p>
-              {session.messageCount !== undefined && (
+              {messages.length > 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  {session.messageCount} messages traités
+                  {messages.length} messages traités
                 </p>
               )}
             </div>
@@ -251,7 +251,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
               <Settings className="h-4 w-4 mr-2" />
               Configurer
             </Button>
-            <Button variant="destructive" size="sm" onClick={() => disconnect()}>
+            <Button variant="destructive" size="sm" onClick={disconnect}>
               Déconnecter
             </Button>
           </div>
@@ -271,7 +271,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
           <p className="text-muted-foreground text-sm mb-4">
             {session.error || 'Une erreur est survenue lors de la connexion'}
           </p>
-          <Button onClick={() => connect()} variant="outline">
+          <Button onClick={generateQR} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             Réessayer
           </Button>
@@ -333,11 +333,11 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
         )}
         
         {/* Erreur de connexion au serveur */}
-        {error && (
+        {session.error && (
           <Alert className="mt-4">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="text-xs text-red-600">
-              {error}
+              {session.error}
             </AlertDescription>
           </Alert>
         )}
