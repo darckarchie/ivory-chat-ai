@@ -154,3 +154,4 @@ export function DashboardMobile({
 
     </div>
   );
+}
