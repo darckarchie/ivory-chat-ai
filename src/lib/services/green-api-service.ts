@@ -27,14 +27,44 @@ class GreenAPIService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Green API HTTP Error:', response.status, errorText);
+        throw new Error(`Erreur API Green (${response.status}): ${errorText}`);
       }
 
       const data = await response.json();
       
-      // Convertir le QR code en data URI pour l'affichage
-      const qrString = data.message || data.qr;
-      const qrDataUri = await QRCode.toDataURL(qrString, {
+      // Vérifier si la réponse contient une erreur
+      if (data.error || data.message?.includes('error') || data.message?.includes('Error')) {
+        console.error('Green API Error Response:', data);
+        throw new Error(`Erreur Green API: ${data.error || data.message}`);
+      }
+      
+      // Récupérer le contenu du QR code
+      const qrContent = data.message || data.qr || data.qrCode;
+      
+      if (!qrContent) {
+        console.error('No QR content in response:', data);
+        throw new Error('Aucun QR code reçu de Green API');
+      }
+      
+      // Vérifier si c'est déjà une image base64
+      if (qrContent.startsWith('data:image/')) {
+        return {
+          qr: qrContent,
+          status: 'qr_generated'
+        };
+      }
+      
+      // Valider la longueur du contenu avant génération QR
+      if (qrContent.length > 2000) {
+        console.error('QR content too long:', qrContent.length, 'characters');
+        console.error('Content preview:', qrContent.substring(0, 200) + '...');
+        throw new Error('Contenu QR trop volumineux pour être encodé');
+      }
+      
+      // Convertir le contenu en QR code image
+      const qrDataUri = await QRCode.toDataURL(qrContent, {
         width: 256,
         margin: 2,
         color: {
@@ -49,7 +79,15 @@ class GreenAPIService {
       };
     } catch (error) {
       console.error('Erreur récupération QR Code:', error);
-      throw new Error('Impossible de générer le QR code');
+      
+      // Si c'est une erreur de QR code trop volumineux, on la propage
+      if (error instanceof Error && error.message.includes('too big')) {
+        throw new Error('Données trop volumineuses pour le QR code');
+      }
+      
+      // Pour les autres erreurs, on donne plus de détails
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      throw new Error(`Impossible de générer le QR code: ${errorMessage}`);
     }
   }
 
