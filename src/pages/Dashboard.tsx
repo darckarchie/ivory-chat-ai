@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { DashboardMobile } from '@/components/dashboard/DashboardMobile';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { ConversationsList } from '@/components/dashboard/ConversationsList';
+import { KnowledgeBasePreview } from '@/components/knowledge-base/KnowledgeBasePreview';
+import { WhatsAppConnectionCard } from '@/components/dashboard/WhatsAppConnectionCard';
 import { AddItemModal } from '@/components/knowledge-base/AddItemModal';
 import { useUserStore, BusinessSector } from '@/lib/store';
 import { useDemoData } from '@/lib/hooks/use-demo-data';
 import { useLiveFeed } from '@/lib/hooks/use-live-feed';
 import { getSectorFromString } from '@/lib/utils/sector-config';
 import { SectorId, KBItem, DashboardMetrics } from '@/lib/types';
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -18,14 +22,7 @@ const Dashboard = () => {
   const [kbItems, setKbItems] = useState<KBItem[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState<KBItem | null>(null);
-  const [metrics, setMetrics] = useState<DashboardMetrics>({
-    orders_today: 0,
-    reservations_today: 0,
-    quotes_today: 0,
-    messages_waiting: 0,
-    avg_response_min: 0,
-    revenue_today: 0
-  });
+  const [whatsappConnected, setWhatsappConnected] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -63,30 +60,6 @@ const Dashboard = () => {
     loadItems();
   }, [isFirstVisit, demoItems]);
   
-  // Charger les métriques
-  useEffect(() => {
-    const loadMetrics = async () => {
-      // Mode démo avec données réalistes
-      setMetrics({
-        orders_today: Math.floor(Math.random() * 20) + 5,
-        reservations_today: Math.floor(Math.random() * 10) + 2,
-        quotes_today: Math.floor(Math.random() * 5) + 1,
-        messages_waiting: messages.filter(m => m.status === 'waiting').length,
-        avg_response_min: Math.floor(Math.random() * 10) + 1,
-        revenue_today: Math.floor(Math.random() * 100000) + 50000,
-        vs_yesterday: {
-          orders: (Math.random() - 0.5) * 0.4, // -20% à +20%
-          revenue: (Math.random() - 0.5) * 0.4,
-          messages: (Math.random() - 0.5) * 0.4
-        }
-      });
-    };
-    
-    loadMetrics();
-    const interval = setInterval(loadMetrics, 30000);
-    return () => clearInterval(interval);
-  }, [messages]);
-  
   const handleSaveItem = (itemData: Omit<KBItem, 'id' | 'business_id' | 'created_at' | 'updated_at'>) => {
     const now = new Date();
     
@@ -121,22 +94,13 @@ const Dashboard = () => {
         setShowAddModal(true);
         break;
       case 'kb-manage':
-        navigate('/knowledge-base');
+        navigate('/dashboard/knowledge-base');
         break;
       case 'inbox':
-        navigate('/messages');
-        break;
-      case 'view-orders':
-        navigate('/orders');
-        break;
-      case 'view-appointments':
-        navigate('/appointments');
-        break;
-      case 'calendar':
-        navigate('/calendar');
+        navigate('/dashboard/conversations');
         break;
       case 'settings':
-        navigate('/settings');
+        navigate('/dashboard/settings');
         break;
       default:
         console.log('Action:', actionId);
@@ -144,22 +108,58 @@ const Dashboard = () => {
   };
   
   const handleOpenChat = (chatId: string) => {
-    navigate(`/messages/${chatId}`);
+    navigate(`/dashboard/conversations/${chatId}`);
   };
   if (!user) {
     return null;
   }
 
   return (
-    <>
-      <DashboardMobile
-        sector={sector}
-        metrics={metrics}
-        live={messages}
-        kbItems={kbItems}
-        onAction={handleAction}
-        onOpenChat={handleOpenChat}
-      />
+    <DashboardLayout 
+      waitingMessages={messages.filter(m => m.status === 'waiting').length}
+      whatsappConnected={whatsappConnected}
+    >
+      <div className="p-4 space-y-6">
+        {/* Salutation */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-primary rounded-2xl p-6 text-white"
+        >
+          <h2 className="text-2xl font-bold mb-2">
+            Bonjour, {user.businessName} 👋
+          </h2>
+          <p className="opacity-90">
+            Votre assistant IA est {whatsappConnected ? 'actif' : 'en attente de connexion'}
+          </p>
+        </motion.div>
+
+        {/* WhatsApp Connection */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <WhatsAppConnectionCard 
+            restaurantId="demo"
+            onStatusChange={setWhatsappConnected}
+          />
+        </motion.div>
+        
+        {/* Conversations Overview */}
+        <ConversationsList 
+          messages={messages}
+          onOpenChat={handleOpenChat}
+        />
+        
+        {/* Knowledge Base Preview */}
+        <KnowledgeBasePreview
+          items={kbItems}
+          sector={sector}
+          onAddItem={() => setShowAddModal(true)}
+          onManageItems={() => navigate('/dashboard/knowledge-base')}
+        />
+      </div>
       
       {/* Modal d'ajout/modification d'items */}
       <AddItemModal
@@ -172,16 +172,7 @@ const Dashboard = () => {
         sector={sector}
         editItem={editingItem}
       />
-      
-      {/* Indicateur de connexion */}
-      {!isConnected && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50">
-          <div className="bg-yellow-500/90 text-xs text-white px-3 py-1 rounded-full">
-            Mode hors ligne
-          </div>
-        </div>
-      )}
-    </>
+    </DashboardLayout>
   );
 };
 
