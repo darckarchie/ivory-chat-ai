@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useGreenAPI } from '@/lib/hooks/use-green-api';
+import { useWhatsAppConnection } from '@/lib/hooks/use-whatsapp-connection';
 import { 
   MessageSquare, 
   QrCode, 
@@ -32,11 +32,10 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
     isConnected, 
     hasQR, 
     isLoading, 
-    messages,
-    generateQR, 
-    disconnect,
-    sendTestMessage 
-  } = useGreenAPI();
+    error,
+    connect,
+    disconnect
+  } = useWhatsAppConnection(restaurantId);
   
   const [testPhone, setTestPhone] = useState('+225');
   const [testMessage, setTestMessage] = useState('');
@@ -46,18 +45,11 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
     onStatusChange?.(isConnected);
   }, [isConnected, onStatusChange]);
 
-  const handleSendTest = async () => {
-    if (!testPhone || !testMessage || !sendTestMessage) return;
-    
-    setIsSendingTest(true);
+  const handleConnect = async () => {
     try {
-      await sendTestMessage(testPhone, testMessage);
-      setTestMessage('');
-      alert('Message test envoyé !');
+      await connect();
     } catch (error) {
-      alert('Erreur envoi message test');
-    } finally {
-      setIsSendingTest(false);
+      console.error('Erreur connexion:', error);
     }
   };
   const getStatusBadge = () => {
@@ -103,7 +95,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
   };
 
   const renderConnectionStatus = () => {
-    if (session.status === 'idle') {
+    if (!session || session.status === 'idle') {
       return (
         <div className="text-center py-6">
           <div className="bg-primary/10 p-4 rounded-full w-fit mx-auto mb-4">
@@ -114,7 +106,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
             Activez votre assistant IA pour répondre automatiquement à vos clients 24/7
           </p>
           <Button 
-            onClick={generateQR}
+            onClick={handleConnect}
             disabled={isLoading}
             className="w-full"
             size="lg"
@@ -135,16 +127,31 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       );
     }
 
-    if (hasQR && session.qrCode) {
+    if (session.status === 'qr_pending' && session.qrCode) {
       return (
         <div className="text-center py-6">
           <h3 className="text-lg font-semibold mb-4">Scannez le QR Code</h3>
           
-          <div className="bg-white p-4 rounded-xl border-2 border-dashed border-primary/30 mb-6 inline-block">
-            <img src={session.qrCode} alt="QR Code WhatsApp" className="w-48 h-48" />
+          <div className="bg-white p-6 rounded-2xl border-2 border-dashed border-primary/30 mb-6 inline-block shadow-lg">
+            <div className="w-64 h-64 flex items-center justify-center">
+              {session.qrCode.startsWith('data:') ? (
+                <img 
+                  src={session.qrCode} 
+                  alt="QR Code WhatsApp" 
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <QrCode className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-sm text-gray-500">Génération du QR code...</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-3 text-sm text-muted-foreground">
+          <div className="space-y-3 text-sm text-muted-foreground mb-6">
             <div className="flex items-center gap-2 justify-center">
               <Smartphone className="h-4 w-4" />
               <span>1. Ouvrez WhatsApp sur votre téléphone</span>
@@ -161,7 +168,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
 
           <Button 
             variant="outline" 
-            onClick={generateQR}
+            onClick={handleConnect}
             className="mt-4"
             size="sm"
           >
@@ -195,11 +202,6 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
             <div className="bg-muted/50 rounded-lg p-3 mb-4">
               <p className="text-xs text-muted-foreground">Numéro connecté</p>
               <p className="font-mono text-sm">{session.phoneNumber}</p>
-              {messages.length > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {messages.length} messages traités
-                </p>
-              )}
             </div>
           )}
 
@@ -212,39 +214,6 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
               })}
             </p>
           )}
-
-          {/* Test de message */}
-          <div className="space-y-3 mb-4 p-3 bg-muted/30 rounded-lg">
-            <Label className="text-sm font-medium">Tester l'envoi de message :</Label>
-            <div className="space-y-2">
-              <Input
-                placeholder="+225XXXXXXXX"
-                value={testPhone}
-                onChange={(e) => setTestPhone(e.target.value)}
-                className="text-sm"
-              />
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Message de test..."
-                  value={testMessage}
-                  onChange={(e) => setTestMessage(e.target.value)}
-                  className="text-sm"
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendTest()}
-                />
-                <Button 
-                  size="sm" 
-                  onClick={handleSendTest}
-                  disabled={!testPhone || !testMessage || isSendingTest}
-                >
-                  {isSendingTest ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
 
           <div className="flex gap-2 justify-center">
             <Button variant="outline" size="sm" onClick={() => {}}>
@@ -259,7 +228,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       );
     }
 
-    if (session.status === 'error') {
+    if (session.status === 'error' || error) {
       return (
         <div className="text-center py-6">
           <div className="bg-red-100 p-4 rounded-full w-fit mx-auto mb-4">
@@ -269,9 +238,9 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
             Erreur de connexion
           </h3>
           <p className="text-muted-foreground text-sm mb-4">
-            {session.error || 'Une erreur est survenue lors de la connexion'}
+            {error || session.error || 'Une erreur est survenue lors de la connexion'}
           </p>
-          <Button onClick={generateQR} variant="outline">
+          <Button onClick={handleConnect} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             Réessayer
           </Button>
@@ -322,22 +291,12 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
           </div>
         )}
 
-        {/* Mode démo notice */}
-        {restaurantId === 'demo' && (
-          <Alert className="mt-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-xs">
-              Mode démo actif. Serveur WhatsApp requis sur localhost:3001
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {/* Erreur de connexion au serveur */}
-        {session.error && (
+        {/* Erreur de connexion */}
+        {error && (
           <Alert className="mt-4">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="text-xs text-red-600">
-              {session.error}
+              {error}
             </AlertDescription>
           </Alert>
         )}
