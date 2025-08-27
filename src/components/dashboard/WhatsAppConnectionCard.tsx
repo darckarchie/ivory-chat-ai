@@ -132,23 +132,16 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
         <div className="text-center py-6">
           <h3 className="text-lg font-semibold mb-4">Scannez le QR Code</h3>
           
-          <div className="bg-white p-6 rounded-2xl border-2 border-dashed border-primary/30 mb-6 inline-block shadow-lg">
-            <div className="w-64 h-64 flex items-center justify-center">
-              {session.qrCode.startsWith('data:') ? (
-                <img 
-                  src={session.qrCode} 
-                  alt="QR Code WhatsApp" 
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <QrCode className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-sm text-gray-500">Génération du QR code...</p>
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="bg-white p-4 rounded-2xl border-2 border-primary/30 mb-6 inline-block shadow-lg">
+            <img 
+              src={session.qrCode} 
+              alt="QR Code WhatsApp à scanner" 
+              className="w-64 h-64 object-contain"
+              onError={(e) => {
+                console.error('Erreur chargement QR code:', e);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
           </div>
 
           <div className="space-y-3 text-sm text-muted-foreground mb-6">
@@ -169,7 +162,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
           <Button 
             variant="outline" 
             onClick={handleConnect}
-            className="mt-4"
+            className="mt-4 w-full"
             size="sm"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
