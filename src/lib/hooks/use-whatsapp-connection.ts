@@ -36,7 +36,7 @@ export function useWhatsAppConnection(restaurantId: string) {
         setSession({
           restaurantId,
           status: 'qr_pending',
-          qrCode: qrData // URL de l'image QR code
+          qrCode: qrData.qr // URL de l'image QR code
         });
         
         // Commencer à vérifier le statut de connexion
