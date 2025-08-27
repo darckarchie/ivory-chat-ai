@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { greenAPIService } from '../services/green-api-service';
 
 export interface WhatsAppSession {
   restaurantId: string;
@@ -27,27 +28,21 @@ export function useWhatsAppConnection(restaurantId: string) {
         status: 'connecting'
       });
       
-      // Étape 2: Appeler l'API Green API pour obtenir le QR code
-      const response = await fetch(`https://7105.api.green-api.com/waInstance7105309758/qr/a7cfa2ce030c4a6188859f93100b96ecac0137473a3044bfbb`);
+      // Étape 2: Utiliser le service Green API pour obtenir le QR code
+      const qrData = await greenAPIService.getQRCode();
       
-      if (!response.ok) {
-        throw new Error(`Erreur API: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.type === 'qrCode' && data.message) {
+      if (qrData) {
         // QR Code reçu avec succès
         setSession({
           restaurantId,
           status: 'qr_pending',
-          qrCode: data.message // URL de l'image QR code
+          qrCode: qrData // URL de l'image QR code
         });
         
         // Commencer à vérifier le statut de connexion
         startStatusPolling();
       } else {
-        throw new Error('Format de réponse QR invalide');
+        throw new Error('Impossible de générer le QR code');
       }
       
     } catch (err) {
@@ -67,31 +62,27 @@ export function useWhatsAppConnection(restaurantId: string) {
   const startStatusPolling = useCallback(() => {
     const checkStatus = async () => {
       try {
-        const response = await fetch(`https://7105.api.green-api.com/waInstance7105309758/getStateInstance/a7cfa2ce030c4a6188859f93100b96ecac0137473a3044bfbb`);
+        const status = await greenAPIService.getConnectionStatus();
         
-        if (response.ok) {
-          const data = await response.json();
+        if (status === 'authorized') {
+          // WhatsApp connecté avec succès
+          setSession({
+            restaurantId,
+            status: 'connected',
+            phoneNumber: '+225 07 00 00 00 01', // Sera récupéré de l'API
+            lastConnected: new Date(),
+            messageCount: 0
+          });
           
-          if (data.stateInstance === 'authorized') {
-            // WhatsApp connecté avec succès
-            setSession({
-              restaurantId,
-              status: 'connected',
-              phoneNumber: '+225 07 00 00 00 01', // Sera récupéré de l'API
-              lastConnected: new Date(),
-              messageCount: 0
-            });
-            
-            // Arrêter le polling
-            return true;
-          } else if (data.stateInstance === 'blocked') {
-            setSession({
-              restaurantId,
-              status: 'error',
-              error: 'Compte WhatsApp bloqué'
-            });
-            return true;
-          }
+          // Arrêter le polling
+          return true;
+        } else if (status === 'blocked') {
+          setSession({
+            restaurantId,
+            status: 'error',
+            error: 'Compte WhatsApp bloqué'
+          });
+          return true;
         }
         
         return false; // Continuer le polling
@@ -130,8 +121,8 @@ export function useWhatsAppConnection(restaurantId: string) {
 
   const disconnect = useCallback(async () => {
     try {
-      // Appeler l'API de déconnexion Green API
-      await fetch(`https://7105.api.green-api.com/waInstance7105309758/logout/a7cfa2ce030c4a6188859f93100b96ecac0137473a3044bfbb`);
+      // Utiliser le service Green API pour la déconnexion
+      await greenAPIService.logout();
       
       setSession({
         restaurantId,
