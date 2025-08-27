@@ -10,6 +10,7 @@ import { LiveRepliesFeed } from "./LiveRepliesFeed";
 import { KnowledgeBasePreview } from "../knowledge-base/KnowledgeBasePreview";
 import { WhatsAppConnectionCard } from "./WhatsAppConnectionCard";
 import { AIResponsePreview } from "./AIResponsePreview";
+import { useState } from "react";
 import { 
   MessageCircle, 
   Settings, 
@@ -87,6 +88,21 @@ export function DashboardMobile({
             onStatusChange={setWhatsappConnected}
           />
         </motion.div>
+        
+        {/* AI Response Preview - Seulement si connecté */}
+        {whatsappConnected && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.15 }}
+          >
+            <AIResponsePreview 
+              isConnected={whatsappConnected}
+              kbItems={kbItems}
+            />
+          </motion.div>
+        )}
+        
         {/* Quick Metrics */}
         <motion.div 
           initial={{ opacity: 0 }}
@@ -150,17 +166,6 @@ export function DashboardMobile({
           />
         </motion.div>
 
-        {/* AI Response Preview */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
-        >
-          <AIResponsePreview 
-            isConnected={whatsappConnected}
-            kbItems={kbItems}
-          />
-        </motion.div>
         {/* Quick Actions */}
         <motion.div 
           initial={{ opacity: 0 }}

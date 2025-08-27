@@ -21,9 +21,22 @@ export function useWhatsAppConnection(restaurantId: string) {
       if (updatedSession.status === 'error') {
         setError(updatedSession.error || 'Erreur de connexion');
       }
+      
+      if (updatedSession.status === 'connected' || updatedSession.status === 'disconnected') {
+        setIsConnecting(false);
+      }
     });
 
-    return unsubscribe;
+    // S'abonner aux messages entrants
+    const unsubscribeMessages = whatsappService.onMessageReceived(restaurantId, (message) => {
+      console.log('📨 Nouveau message dans le hook:', message);
+      // Le message est déjà sauvegardé dans localStorage par le service
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeMessages();
+    };
   }, [restaurantId]);
 
   const connect = useCallback(async (webhookUrl?: string) => {
@@ -35,23 +48,34 @@ export function useWhatsAppConnection(restaurantId: string) {
       setSession(newSession);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur de connexion');
+      setIsConnecting(false);
     } finally {
       setIsConnecting(false);
     }
   }, [restaurantId]);
 
   const disconnect = useCallback(async () => {
+    setIsConnecting(true);
     try {
       await whatsappService.disconnectWhatsApp(restaurantId);
       setSession(prev => prev ? { ...prev, status: 'disconnected' } : null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur de déconnexion');
+    } finally {
+      setIsConnecting(false);
     }
   }, [restaurantId]);
 
+  const sendTestMessage = useCallback(async (to: string, message: string) => {
+    try {
+      await whatsappService.sendTestMessage(restaurantId, to, message);
+    } catch (err) {
+      throw err;
+    }
+  }, [restaurantId]);
   const isConnected = session?.status === 'connected';
   const hasQR = session?.status === 'qr_pending' && !!session.qrCode;
-  const isLoading = isConnecting || session?.status === 'connecting';
+  const isLoading = isConnecting || session?.status === 'connecting' || session?.status === 'qr_pending';
 
   return {
     session,
@@ -60,6 +84,7 @@ export function useWhatsAppConnection(restaurantId: string) {
     isLoading,
     error,
     connect,
-    disconnect
+    disconnect,
+    sendTestMessage: whatsappService.sendTestMessage ? sendTestMessage : undefined
   };
 }
