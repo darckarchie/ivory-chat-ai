@@ -11,6 +11,7 @@ import Settings from "./pages/Settings";
 import Conversations from "./pages/Conversations";
 import Analytics from "./pages/Analytics";
 import KnowledgeBase from "./pages/KnowledgeBase";
+import WhatsAppSetup from "./pages/WhatsAppSetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/dashboard/conversations" element={<Conversations />} />
           <Route path="/dashboard/analytics" element={<Analytics />} />
           <Route path="/dashboard/knowledge-base" element={<KnowledgeBase />} />
+          <Route path="/dashboard/whatsapp" element={<WhatsAppSetup />} />
           <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
