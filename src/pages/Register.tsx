@@ -59,11 +59,12 @@ const Register = () => {
       phone: formData.phone,
       businessName: formData.businessName,
       businessSector: selectedSector,
-      isAuthenticated: true
+      isAuthenticated: true,
+      onboardingComplete: true
     };
     
     setUser(user);
-    navigate(`/onboarding?sector=${selectedSector}`);
+    navigate(`/dashboard?secteur=${selectedSector}`);
   };
 
   const handleDefaultChoice = () => {
@@ -76,11 +77,12 @@ const Register = () => {
       phone: formData.phone,
       businessName: formData.businessName,
       businessSector: 'commerce' as BusinessSector,
-      isAuthenticated: true
+      isAuthenticated: true,
+      onboardingComplete: true
     };
     
     setUser(user);
-    navigate('/onboarding?sector=commerce');
+    navigate('/dashboard?secteur=commerce');
   };
 
   const sectorOptions = [
@@ -91,9 +93,9 @@ const Register = () => {
       description: 'Automatisez vos commandes et livraisons',
       icon: '🍽️',
       gradient: 'from-orange-400 via-red-500 to-pink-500',
-      bgGradient: 'from-orange-50 to-red-50',
-      borderColor: 'border-orange-200',
-      hoverShadow: 'hover:shadow-orange-200/50',
+      bgGradient: 'from-accent/10 to-accent/20',
+      borderColor: 'border-accent/30',
+      hoverShadow: 'hover:shadow-accent/30',
       benefits: ['Menu digital intelligent', 'Commandes automatisées', 'Gestion livraisons'],
       keywords: ['restaurant', 'alimentation', 'livraison', 'menu', 'commandes', 'maquis', 'traiteur'],
       stats: { users: '2.3k+', growth: '+45%' },
@@ -107,9 +109,9 @@ const Register = () => {
       description: 'Vendez 24/7 avec votre assistant IA',
       icon: '🏪',
       gradient: 'from-blue-400 via-purple-500 to-indigo-600',
-      bgGradient: 'from-blue-50 to-purple-50',
-      borderColor: 'border-blue-200',
-      hoverShadow: 'hover:shadow-blue-200/50',
+      bgGradient: 'from-primary/10 to-primary/20',
+      borderColor: 'border-primary/30',
+      hoverShadow: 'hover:shadow-primary/30',
       benefits: ['Catalogue auto-géré', 'Ventes 24h/7j', 'Stock optimisé'],
       keywords: ['commerce', 'boutique', 'vente', 'e-shop', 'produits', 'magasin'],
       stats: { users: '5.1k+', growth: '+67%' },
@@ -123,9 +125,9 @@ const Register = () => {
       description: 'Gérez vos RDV et devis automatiquement',
       icon: '🔧',
       gradient: 'from-green-400 via-emerald-500 to-teal-600',
-      bgGradient: 'from-green-50 to-emerald-50',
-      borderColor: 'border-green-200',
-      hoverShadow: 'hover:shadow-green-200/50',
+      bgGradient: 'from-success/10 to-success/20',
+      borderColor: 'border-success/30',
+      hoverShadow: 'hover:shadow-success/30',
       benefits: ['Devis en 2 clics', 'Planning automatique', 'Suivi client pro'],
       keywords: ['services', 'consulting', 'rendez-vous', 'devis', 'planning', 'réparation'],
       stats: { users: '1.8k+', growth: '+52%' },
@@ -139,9 +141,9 @@ const Register = () => {
       description: 'Réservations et check-in automatisés',
       icon: '🏨',
       gradient: 'from-purple-400 via-pink-500 to-rose-500',
-      bgGradient: 'from-purple-50 to-pink-50',
-      borderColor: 'border-purple-200',
-      hoverShadow: 'hover:shadow-purple-200/50',
+      bgGradient: 'from-secondary/10 to-secondary/20',
+      borderColor: 'border-secondary/30',
+      hoverShadow: 'hover:shadow-secondary/30',
       benefits: ['Réservations 24/7', 'Gestion des chambres', 'Check-in automatique'],
       keywords: ['hôtel', 'réservation', 'chambre', 'hébergement', 'tourisme', 'auberge'],
       stats: { users: '890+', growth: '+38%' },
@@ -167,9 +169,9 @@ const Register = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0">
-          <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-          <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+          <div className="absolute top-0 -left-4 w-72 h-72 bg-primary/30 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-accent/30 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-secondary/30 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
         </div>
 
         <div className="relative z-10 container mx-auto px-4 py-8">
@@ -197,7 +199,7 @@ const Register = () => {
                   className="text-4xl md:text-6xl font-bold text-white mb-6"
                 >
                   Choisissez votre{" "}
-                  <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                     secteur d'activité
                   </span>
                 </motion.h1>
@@ -223,7 +225,7 @@ const Register = () => {
                     placeholder="Rechercher votre secteur..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 h-14 bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60 focus:bg-white/20 focus:border-white/40"
+                    className="pl-12 h-14 bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60 focus:bg-white/20 focus:border-primary/60"
                   />
                 </motion.div>
               </div>
@@ -407,7 +409,7 @@ const Register = () => {
             >
               <Button 
                 variant="link" 
-                className="text-white/60 hover:text-white/80" 
+                className="text-white/60 hover:text-primary" 
                 onClick={handleDefaultChoice}
               >
                 Je ne sais pas — choisir Commerce par défaut
@@ -449,7 +451,7 @@ const Register = () => {
                   <Button 
                     size="lg" 
                     onClick={handleContinue}
-                    className="min-w-[180px] bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300"
+                    className="min-w-[180px] bg-gradient-primary hover:shadow-glow text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300"
                   >
                     <Sparkles className="h-5 w-5 mr-2" />
                     Continuer
@@ -469,7 +471,7 @@ const Register = () => {
             100% { transform: translate(0px, 0px) scale(1); }
           }
           .animate-blob {
-            animation: blob 7s infinite;
+            animation: blob 8s infinite ease-in-out;
           }
           .animation-delay-2000 {
             animation-delay: 2s;
@@ -503,7 +505,7 @@ const Register = () => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-4"
             >
               <Sparkles className="h-8 w-8 text-white" />
             </motion.div>
@@ -531,7 +533,7 @@ const Register = () => {
                       <FormControl>
                         <Input 
                           placeholder="Ex: Restaurant Chez Fatou" 
-                          className="h-12 bg-white/80 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                          className="h-12 bg-white/80 border-gray-200 focus:border-primary focus:ring-primary/20"
                           {...field} 
                         />
                       </FormControl>
@@ -553,7 +555,7 @@ const Register = () => {
                         <FormControl>
                           <Input 
                             placeholder="Votre prénom" 
-                            className="h-12 bg-white/80 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            className="h-12 bg-white/80 border-gray-200 focus:border-primary focus:ring-primary/20"
                             {...field} 
                           />
                         </FormControl>
@@ -571,7 +573,7 @@ const Register = () => {
                         <FormControl>
                           <Input 
                             placeholder="Votre nom" 
-                            className="h-12 bg-white/80 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                            className="h-12 bg-white/80 border-gray-200 focus:border-primary focus:ring-primary/20"
                             {...field} 
                           />
                         </FormControl>
@@ -593,7 +595,7 @@ const Register = () => {
                       <FormControl>
                         <Input 
                           placeholder="+225XXXXXXXX" 
-                          className="h-12 bg-white/80 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20"
+                          className="h-12 bg-white/80 border-gray-200 focus:border-primary focus:ring-primary/20"
                           {...field} 
                         />
                       </FormControl>
@@ -604,7 +606,7 @@ const Register = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full h-12 bg-gradient-primary hover:shadow-glow text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
                   size="lg"
                 >
                   <motion.span
@@ -623,7 +625,7 @@ const Register = () => {
                 Déjà un compte ?{" "}
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-purple-600 hover:text-purple-700 font-medium" 
+                  className="p-0 h-auto text-primary hover:text-primary-hover font-medium" 
                   onClick={() => navigate('/login')}
                 >
                   Se connecter
@@ -642,7 +644,7 @@ const Register = () => {
           100% { transform: translate(0px, 0px) scale(1); }
         }
         .animate-blob {
-          animation: blob 7s infinite;
+          animation: blob 8s infinite ease-in-out;
         }
         .animation-delay-2000 {
           animation-delay: 2s;
