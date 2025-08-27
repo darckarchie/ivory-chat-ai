@@ -1,3 +1,5 @@
+import QRCode from 'qrcode';
+
 // Service pour l'intégration Green API WhatsApp
 class GreenAPIService {
   private instance: string;
@@ -30,8 +32,19 @@ class GreenAPIService {
 
       const data = await response.json();
       
+      // Convertir le QR code en data URI pour l'affichage
+      const qrString = data.message || data.qr;
+      const qrDataUri = await QRCode.toDataURL(qrString, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      
       return {
-        qr: data.message || data.qr,
+        qr: qrDataUri,
         status: 'qr_generated'
       };
     } catch (error) {
