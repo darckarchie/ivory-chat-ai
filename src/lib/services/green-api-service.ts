@@ -56,6 +56,14 @@ class GreenAPIService {
         };
       }
       
+      // Vérifier si c'est une image base64 sans préfixe
+      if (qrContent.startsWith('iVBORw0KGgoAAA')) {
+        return {
+          qr: `data:image/png;base64,${qrContent}`,
+          status: 'qr_generated'
+        };
+      }
+      
       // Valider la longueur du contenu avant génération QR
       if (qrContent.length > 2000) {
         console.error('QR content too long:', qrContent.length, 'characters');
