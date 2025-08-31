@@ -171,7 +171,6 @@ class BaileysIntegrationService {
       this.sessions.set(restaurantId, session);
       return session;
     } catch (error) {
-      console.error('❌ Erreur vérification statut:', error);
       const errorSession: BaileysSession = {
         restaurantId,
         status: 'error',
