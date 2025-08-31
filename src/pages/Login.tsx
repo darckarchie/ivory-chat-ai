@@ -38,7 +38,7 @@ const Login = () => {
     try {
       // Générer l'email à partir du numéro
       const cleanPhone = data.phone.replace(/[^0-9]/g, '')
-      const email = `${cleanPhone}@whalix.ci`
+      const email = `user-${cleanPhone}@whalix.ci`
       
       await signIn(email, data.password)
       

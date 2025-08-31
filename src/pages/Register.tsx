@@ -63,7 +63,7 @@ const Register = () => {
     try {
       // Générer un email temporaire basé sur le numéro
       const cleanPhone = formData.phone.replace(/[^0-9]/g, '');
-      const email = `${cleanPhone}@whalix.ci`;
+      const email = `user-${cleanPhone}@whalix.ci`;
       
       await signUp({
         email,
@@ -101,7 +101,7 @@ const Register = () => {
     
     try {
       const cleanPhone = formData.phone.replace(/[^0-9]/g, '');
-      const email = `${cleanPhone}@whalix.ci`;
+      const email = `user-${cleanPhone}@whalix.ci`;
       
       await signUp({
         email,
