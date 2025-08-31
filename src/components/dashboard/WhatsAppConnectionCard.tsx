@@ -223,7 +223,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               whileHover={{ scale: 1.02 }}
-              className="bg-white p-6 rounded-2xl border-2 border-primary/30 mb-6 inline-block shadow-glow"
+              className="bg-white p-4 rounded-2xl border-2 border-primary/30 mb-6 inline-block shadow-glow"
             >
               {session.qrCode ? (
                 session.qrCode.startsWith('http') || session.qrCode.startsWith('data:') ? (
@@ -231,14 +231,14 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
                     <img 
                       src={session.qrCode}
                       alt="QR Code WhatsApp" 
-                      className="w-64 h-64 object-contain"
+                      className="w-48 h-48 object-contain mx-auto"
                       onLoad={() => console.log('✅ [DEBUG] Image QR chargée avec succès')}
                       onError={(e) => console.error('❌ [DEBUG] Erreur chargement image QR:', e)}
                     />
                     <p className="text-xs text-muted-foreground mt-2">QR Code généré</p>
                   </div>
                 ) : (
-                  <div className="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                  <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
                     <div className="text-center">
                       <QrCode className="h-16 w-16 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-500">Mode Test</p>
@@ -248,7 +248,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
                   </div>
                 )
               ) : (
-                <div className="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
                   <div className="text-center">
                     <Loader2 className="h-16 w-16 text-gray-400 mx-auto mb-2 animate-spin" />
                     <p className="text-sm text-gray-500">Génération QR...</p>
