@@ -25,7 +25,7 @@ interface WhatsAppConnectionCardProps {
 }
 
 export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAppConnectionCardProps) {
-  const { session, isLoading, connect, disconnect } = useWhatsAppSession();
+  const { session, isLoading, connect, disconnect, error } = useWhatsAppSession();
   const { logEvent } = useMetrics();
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   
@@ -133,11 +133,10 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
           
           <div className="space-y-3">
             <Button 
-              onClick={connect}
+              onClick={handleConnect}
               disabled={isLoading}
               className="w-full bg-gradient-primary hover:shadow-glow"
               size="lg"
-              onClick={handleConnect}
             >
               {isLoading ? (
                 <>
@@ -312,13 +311,12 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
 
           <Button 
             variant="outline" 
-            onClick={connect}
-            className="w-full"
-            size="sm"
             onClick={() => {
               addDebugLog('1. Clic sur Activer IA');
               connect();
             }}
+            className="w-full"
+            size="sm"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Nouveau QR Code
@@ -404,7 +402,6 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
               <Settings className="h-4 w-4 mr-2" />
               Configurer
             </Button>
-            <Button variant="destructive" size="sm" onClick={disconnect}>
             <Button variant="destructive" size="sm" onClick={handleDisconnect}>
               Déconnecter
             </Button>
