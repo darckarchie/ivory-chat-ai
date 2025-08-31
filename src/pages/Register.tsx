@@ -684,13 +684,12 @@ const Register = () => {
                   type="submit" 
                   className="w-full h-12 bg-gradient-primary hover:shadow-glow text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
                   size="lg"
-                  disabled={form.formState.isSubmitting}
                 >
                   <motion.span
                     whileHover={{ scale: 1.05 }}
                     className="flex items-center gap-2"
                   >
-                    {form.formState.isSubmitting ? "Création..." : "Continuer"}
+                    Continuer
                     <ChevronRight className="h-4 w-4" />
                   </motion.span>
                 </Button>
