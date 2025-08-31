@@ -52,7 +52,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
     setError(null);
     
     try {
-      console.log('🔗 Création de session...');
+      console.log('🔗 [DEBUG] Création de session pour:', restaurantId);
       setSession({ status: 'connecting' });
       
       const response = await fetch(`${BACKEND_URL}/api/session/create`, {
@@ -61,29 +61,39 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
         body: JSON.stringify({ restaurantId })
       });
       
+      console.log('📡 [DEBUG] Response status:', response.status);
+      console.log('📡 [DEBUG] Response ok:', response.ok);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [DEBUG] Erreur response:', errorText);
         throw new Error(`Erreur serveur: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('📡 Réponse serveur:', data);
+      console.log('📡 [DEBUG] Réponse serveur complète:', JSON.stringify(data, null, 2));
       
       // Adapter la réponse selon la structure du serveur
       const adaptedSession = {
         ...data,
         qrCode: data.status?.qr || data.qrCode || data.qr,
-        status: data.status?.status || data.status || 'connecting'
+        status: data.status?.status || data.status || 'connecting',
+        sessionId: data.sessionId || data.id
       };
       
-      console.log('📊 Session adaptée:', adaptedSession);
+      console.log('📊 [DEBUG] Session adaptée:', JSON.stringify(adaptedSession, null, 2));
+      console.log('🔍 [DEBUG] QR Code trouvé:', !!adaptedSession.qrCode);
+      console.log('🔍 [DEBUG] Status final:', adaptedSession.status);
+      
       setSession(adaptedSession);
       
       // Commencer à vérifier le statut
       if (adaptedSession.sessionId && adaptedSession.status !== 'connected') {
+        console.log('🔄 [DEBUG] Démarrage polling pour sessionId:', adaptedSession.sessionId);
         startStatusPolling(adaptedSession.sessionId);
       }
     } catch (error) {
-      console.error('❌ Erreur création session:', error);
+      console.error('❌ [DEBUG] Erreur création session:', error);
       setError(error instanceof Error ? error.message : 'Erreur de connexion');
       setSession({ status: 'error', error: error instanceof Error ? error.message : 'Erreur de connexion' });
     } finally {
@@ -93,11 +103,13 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
 
   const checkSessionStatus = async (sessionId: string) => {
     try {
-      console.log('🔍 Vérification statut session:', sessionId);
+      console.log('🔍 [DEBUG] Vérification statut session:', sessionId);
       const response = await fetch(`${BACKEND_URL}/api/session/${sessionId}/status`);
+      console.log('📡 [DEBUG] Status check response:', response.status, response.ok);
+      
       if (response.ok) {
         const data = await response.json();
-        console.log('📊 Statut reçu:', data);
+        console.log('📊 [DEBUG] Statut reçu:', JSON.stringify(data, null, 2));
         
         // Adapter la réponse selon la structure du serveur
         const adaptedSession = {
@@ -106,22 +118,25 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
           status: data.status?.status || data.status || 'connecting'
         };
         
-        console.log('📊 Session adaptée:', adaptedSession);
+        console.log('📊 [DEBUG] Session adaptée après polling:', JSON.stringify(adaptedSession, null, 2));
         setSession(adaptedSession);
         return adaptedSession;
+      } else {
+        const errorText = await response.text();
+        console.error('❌ [DEBUG] Erreur status check:', response.status, errorText);
       }
     } catch (error) {
-      console.error('Erreur vérification statut:', error);
+      console.error('❌ [DEBUG] Erreur vérification statut:', error);
     }
     return null;
   };
 
   const startStatusPolling = (sessionId: string) => {
-    console.log('🔄 Démarrage polling pour session:', sessionId);
+    console.log('🔄 [DEBUG] Démarrage polling pour session:', sessionId);
     const interval = setInterval(async () => {
       const status = await checkSessionStatus(sessionId);
       if (status?.status === 'connected' || status?.status === 'error') {
-        console.log('⏹️ Arrêt polling, statut final:', status?.status);
+        console.log('⏹️ [DEBUG] Arrêt polling, statut final:', status?.status);
         clearInterval(interval);
       }
     }, 3000);
@@ -131,7 +146,9 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
   };
 
   const handleConnect = async () => {
+    console.log('🚀 [DEBUG] Bouton connecter cliqué');
     const isHealthy = await checkServerHealth();
+    console.log('🏥 [DEBUG] Serveur healthy:', isHealthy);
     if (!isHealthy) {
       setError('Serveur backend indisponible');
       return;
@@ -141,11 +158,13 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
   };
 
   const handleDisconnect = () => {
+    console.log('🔴 [DEBUG] Déconnexion demandée');
     setSession(null);
     setError(null);
   };
 
   const getStatusBadge = () => {
+    console.log('🏷️ [DEBUG] Génération badge pour status:', session?.status);
     if (!session) return null;
 
     switch (session.status) {
@@ -264,6 +283,11 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
     }
 
     if (session?.status === 'qr_pending' && session?.qrCode) {
+      console.log('📱 [DEBUG] Affichage QR - Status:', session.status);
+      console.log('📱 [DEBUG] QR Code value:', session.qrCode);
+      console.log('📱 [DEBUG] QR Code type:', typeof session.qrCode);
+      console.log('📱 [DEBUG] QR Code starts with http:', session.qrCode.startsWith('http'));
+      
       return (
         <div className="text-center py-8">
           <motion.div
@@ -281,22 +305,35 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
               whileHover={{ scale: 1.02 }}
               className="bg-white p-6 rounded-2xl border-2 border-primary/30 mb-6 inline-block shadow-glow"
             >
-              {session?.qrCode && (
-                session.qrCode.startsWith('http') ? (
-                  <img 
-                    src={session.qrCode} 
-                    alt="QR Code WhatsApp" 
-                    className="w-64 h-64 object-contain"
-                  />
+              {session?.qrCode ? (
+                session.qrCode.startsWith('http') || session.qrCode.startsWith('data:image') ? (
+                  <div>
+                    <img 
+                      src={session.qrCode} 
+                      alt="QR Code WhatsApp" 
+                      className="w-64 h-64 object-contain"
+                      onLoad={() => console.log('✅ [DEBUG] Image QR chargée avec succès')}
+                      onError={(e) => console.error('❌ [DEBUG] Erreur chargement image QR:', e)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">QR Code généré</p>
+                  </div>
                 ) : (
                   <div className="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
                     <div className="text-center">
                       <QrCode className="h-16 w-16 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-500">Mode Test</p>
-                      <p className="text-xs text-gray-400 mt-2">En attente du serveur Baileys</p>
+                      <p className="text-xs text-gray-400 mt-2">QR: {session.qrCode}</p>
+                      <p className="text-xs text-gray-400">Serveur retourne: {typeof session.qrCode}</p>
                     </div>
                   </div>
                 )
+              ) : (
+                <div className="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <Loader2 className="h-16 w-16 text-gray-400 mx-auto mb-2 animate-spin" />
+                    <p className="text-sm text-gray-500">Génération QR...</p>
+                  </div>
+                </div>
               )}
             </motion.div>
           </motion.div>
