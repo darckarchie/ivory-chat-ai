@@ -84,7 +84,7 @@ export function useBaileysConnection(restaurantId: string) {
       
       // Polling pour vérifier si l'utilisateur a scanné le QR
       if (adaptedSession.status === 'qr_pending') {
-        addDebugLog('4. QR affiché - En attente du scan utilisateur');
+        console.log('4. QR affiché - En attente du scan utilisateur');
         startStatusPolling();
       }
       
@@ -156,17 +156,17 @@ export function useBaileysConnection(restaurantId: string) {
 
   // Polling pour vérifier le statut de connexion
   const startStatusPolling = useCallback(() => {
-    addDebugLog('5. Démarrage polling statut...');
+    console.log('5. Démarrage polling statut...');
     
     const checkStatus = async () => {
       try {
         const response = await fetch(`${BACKEND_URL}/api/whatsapp/status/${restaurantId}`);
         if (response.ok) {
           const data = await response.json();
-          addDebugLog(`Polling: ${data.status}`);
+          console.log(`Polling: ${data.status}`);
           
           if (data.status === 'connected' || data.status === 'authorized') {
-            addDebugLog('✅ Connexion confirmée par le serveur!');
+            console.log('✅ Connexion confirmée par le serveur!');
             setSession(prev => ({
               ...prev,
               status: 'connected',
@@ -179,7 +179,7 @@ export function useBaileysConnection(restaurantId: string) {
         }
         return false; // Continuer le polling
       } catch (error) {
-        addDebugLog(`❌ Erreur polling: ${error}`);
+        console.log(`❌ Erreur polling: ${error}`);
         return false;
       }
     };
@@ -196,7 +196,7 @@ export function useBaileysConnection(restaurantId: string) {
         clearInterval(interval);
         
         if (attempts >= maxAttempts) {
-          addDebugLog('⏰ Timeout - QR code expiré');
+          console.log('⏰ Timeout - QR code expiré');
           setSession(prev => ({
             ...prev,
             status: 'error',
