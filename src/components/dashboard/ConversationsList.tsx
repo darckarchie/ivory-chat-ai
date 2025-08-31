@@ -73,10 +73,10 @@ interface ConversationItemProps {
 }
 
 function ConversationItem({ message, index, onOpenChat }: ConversationItemProps) {
-  const timeAgo = formatDistanceToNow(new Date(message.at), { 
-    addSuffix: true, 
-    locale: fr 
-  });
+  const timeAgo = new Date(message.at).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });</parameter>
 
   const getStatusColor = () => {
     switch (message.status) {

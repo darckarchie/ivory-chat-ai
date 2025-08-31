@@ -36,12 +36,13 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
 
   const checkServerHealth = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/`, {
+      const response = await fetch(`${BACKEND_URL}/health`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
       return response.ok;
     } catch (error) {
+      console.warn('⚠️ Serveur backend non disponible:', error);
       return false;
     }
   };

@@ -6,8 +6,6 @@ import { Search, Filter, Clock, CheckCircle, User, Phone, MessageCircle } from '
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 
 const Conversations = () => {
@@ -147,10 +145,10 @@ interface ConversationItemProps {
 }
 
 function ConversationItem({ conversation, index, onClick }: ConversationItemProps) {
-  const timeAgo = formatDistanceToNow(new Date(conversation.at), { 
-    addSuffix: true, 
-    locale: fr 
-  });
+  const timeAgo = new Date(conversation.at).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });</parameter>
 
   const getStatusIcon = () => {
     switch (conversation.status) {

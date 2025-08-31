@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LiveReply } from "@/lib/types";
 import { MessageCircle, Clock, CheckCircle, User, Phone } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
 
 interface LiveRepliesFeedProps {
   messages: LiveReply[];
@@ -93,10 +91,10 @@ interface MessageCardProps {
 }
 
 function MessageCard({ message, index, onOpenChat, onQuickReply, isUrgent }: MessageCardProps) {
-  const timeAgo = formatDistanceToNow(new Date(message.at), { 
-    addSuffix: true, 
-    locale: fr 
-  });
+  const timeAgo = new Date(message.at).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });</parameter>
 
   const getStatusIcon = () => {
     switch (message.status) {
