@@ -148,7 +148,7 @@ function ConversationItem({ conversation, index, onClick }: ConversationItemProp
   const timeAgo = new Date(conversation.at).toLocaleTimeString('fr-FR', {
     hour: '2-digit',
     minute: '2-digit'
-  });</parameter>
+  });
 
   const getStatusIcon = () => {
     switch (conversation.status) {
