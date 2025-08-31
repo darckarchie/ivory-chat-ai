@@ -24,7 +24,7 @@ interface WhatsAppConnectionCardProps {
 }
 
 export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAppConnectionCardProps) {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<any>({ status: 'idle' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -51,6 +51,9 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
     setError(null);
     
     try {
+      console.log('🔗 Création de session...');
+      setSession({ status: 'connecting' });
+      
       const response = await fetch(`${BACKEND_URL}/api/session/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,14 +65,17 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       }
       
       const data = await response.json();
+      console.log('📡 Réponse serveur:', data);
       setSession(data);
       
       // Commencer à vérifier le statut
-      if (data.sessionId) {
+      if (data.sessionId && data.status !== 'connected') {
         startStatusPolling(data.sessionId);
       }
     } catch (error) {
+      console.error('❌ Erreur création session:', error);
       setError(error instanceof Error ? error.message : 'Erreur de connexion');
+      setSession({ status: 'error', error: error instanceof Error ? error.message : 'Erreur de connexion' });
     } finally {
       setIsLoading(false);
     }
@@ -77,9 +83,11 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
 
   const checkSessionStatus = async (sessionId: string) => {
     try {
+      console.log('🔍 Vérification statut session:', sessionId);
       const response = await fetch(`${BACKEND_URL}/api/session/${sessionId}/status`);
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 Statut reçu:', data);
         setSession(data);
         return data;
       }
@@ -90,9 +98,11 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
   };
 
   const startStatusPolling = (sessionId: string) => {
+    console.log('🔄 Démarrage polling pour session:', sessionId);
     const interval = setInterval(async () => {
       const status = await checkSessionStatus(sessionId);
       if (status?.status === 'connected' || status?.status === 'error') {
+        console.log('⏹️ Arrêt polling, statut final:', status?.status);
         clearInterval(interval);
       }
     }, 3000);
@@ -159,7 +169,9 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
   };
 
   const renderConnectionStatus = () => {
-    if (!session || session.status === 'idle') {
+    console.log('🎨 Rendu statut:', session?.status);
+    
+    if (!session || session.status === 'idle' || session.status === 'disconnected') {
       return (
         <div className="text-center py-8">
           <motion.div
@@ -206,6 +218,28 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
               </AlertDescription>
             </Alert>
           )}
+        </div>
+      );
+    }
+
+    // État de connexion en cours
+    if (session.status === 'connecting') {
+      return (
+        <div className="text-center py-8">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-primary/10 p-6 rounded-2xl w-fit mx-auto mb-6"
+          >
+            <Loader2 className="h-12 w-12 text-primary animate-spin" />
+          </motion.div>
+          
+          <h3 className="text-xl font-bold mb-3 text-primary">
+            Connexion en cours...
+          </h3>
+          <p className="text-muted-foreground text-sm mb-6">
+            Génération du QR code WhatsApp
+          </p>
         </div>
       );
     }
