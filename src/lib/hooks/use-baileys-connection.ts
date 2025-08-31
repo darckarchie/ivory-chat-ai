@@ -65,8 +65,10 @@ export function useBaileysConnection(restaurantId: string) {
       // Adapter la réponse selon la structure du serveur
       const adaptedSession: BaileysSession = {
         restaurantId,
-        status: data.status === 'qr_generated' ? 'qr_pending' : 
-                data.status === 'connected' ? 'connected' : 'connecting',
+        status: data.status === 'qr_pending' ? 'qr_pending' :
+                data.status === 'qr_generated' ? 'qr_pending' : 
+                data.status === 'connected' ? 'connected' : 
+                data.status === 'authorized' ? 'connected' : 'connecting',
         qrCode: data.qr || data.qrCode || data.message,
         phoneNumber: data.phoneNumber,
         error: data.error
@@ -76,6 +78,7 @@ export function useBaileysConnection(restaurantId: string) {
       console.log('🔍 [DEBUG] QR Code found:', !!adaptedSession.qrCode);
       console.log('🔍 [DEBUG] QR Code value:', adaptedSession.qrCode);
       console.log('🔍 [DEBUG] Final status:', adaptedSession.status);
+      console.log('🔍 [DEBUG] Original server status:', data.status);
       
       setSession(adaptedSession);
       
