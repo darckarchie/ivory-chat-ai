@@ -82,19 +82,10 @@ export function useBaileysConnection(restaurantId: string) {
       
       setSession(adaptedSession);
       
-      // Si QR généré, simuler une connexion après 10 secondes pour la démo
+      // Polling pour vérifier si l'utilisateur a scanné le QR
       if (adaptedSession.status === 'qr_pending') {
-        console.log('⏰ [DEBUG] Simulating connection in 10 seconds...');
-        setTimeout(() => {
-          console.log('✅ [DEBUG] Simulated connection successful');
-          setSession(prev => ({
-            ...prev,
-            status: 'connected',
-            phoneNumber: '+225 07 00 00 00 01',
-            lastConnected: new Date(),
-            qrCode: undefined
-          }));
-        }, 10000);
+        addDebugLog('4. QR affiché - En attente du scan utilisateur');
+        startStatusPolling();
       }
       
     } catch (error) {
@@ -161,6 +152,59 @@ export function useBaileysConnection(restaurantId: string) {
       console.error('❌ Erreur envoi message test:', error);
       return false;
     }
+  }, [restaurantId]);
+
+  // Polling pour vérifier le statut de connexion
+  const startStatusPolling = useCallback(() => {
+    addDebugLog('5. Démarrage polling statut...');
+    
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/whatsapp/status/${restaurantId}`);
+        if (response.ok) {
+          const data = await response.json();
+          addDebugLog(`Polling: ${data.status}`);
+          
+          if (data.status === 'connected' || data.status === 'authorized') {
+            addDebugLog('✅ Connexion confirmée par le serveur!');
+            setSession(prev => ({
+              ...prev,
+              status: 'connected',
+              phoneNumber: data.phoneNumber || '+225 07 00 00 00 01',
+              lastConnected: new Date(),
+              qrCode: undefined
+            }));
+            return true; // Arrêter le polling
+          }
+        }
+        return false; // Continuer le polling
+      } catch (error) {
+        addDebugLog(`❌ Erreur polling: ${error}`);
+        return false;
+      }
+    };
+    
+    // Vérifier toutes les 3 secondes pendant 2 minutes max
+    let attempts = 0;
+    const maxAttempts = 40; // 2 minutes
+    
+    const interval = setInterval(async () => {
+      attempts++;
+      const shouldStop = await checkStatus();
+      
+      if (shouldStop || attempts >= maxAttempts) {
+        clearInterval(interval);
+        
+        if (attempts >= maxAttempts) {
+          addDebugLog('⏰ Timeout - QR code expiré');
+          setSession(prev => ({
+            ...prev,
+            status: 'error',
+            error: 'QR code expiré. Veuillez réessayer.'
+          }));
+        }
+      }
+    }, 3000);
   }, [restaurantId]);
 
   // Vérifier le statut initial
