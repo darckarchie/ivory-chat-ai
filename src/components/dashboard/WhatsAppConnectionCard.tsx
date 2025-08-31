@@ -35,6 +35,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
   }, [session?.status, onStatusChange]);
 
   const checkServerHealth = async () => {
+    console.log('2. Check health...');
     try {
       const response = await fetch(`${BACKEND_URL}/health`, {
         method: 'GET',
@@ -42,12 +43,15 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       });
       return response.ok;
     } catch (error) {
+      console.log('🏥 [DEBUG] Health check response:', response.status, response.ok);
+      console.error('❌ [DEBUG] Health check failed:', error);
       console.warn('⚠️ Serveur backend non disponible:', error);
       return false;
     }
   };
 
   const createSession = async () => {
+    console.log('3. Création session...');
     setIsLoading(true);
     setError(null);
     
@@ -55,6 +59,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       console.log('🔗 [DEBUG] Création de session pour:', restaurantId);
       setSession({ status: 'connecting' });
       
+      console.log('📡 [DEBUG] Envoi requête vers:', `${BACKEND_URL}/api/session/create`);
       const response = await fetch(`${BACKEND_URL}/api/session/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,13 +81,15 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       // Adapter la réponse selon la structure du serveur
       const adaptedSession = {
         ...data,
-        qrCode: data.status?.qr || data.qrCode || data.qr,
-        status: data.status?.status || data.status || 'connecting',
+        qrCode: data.status?.qr || data.qrCode || data.qr || data.message,
+        status: data.status?.status || data.status || (data.qrCode ? 'qr_pending' : 'connecting'),
         sessionId: data.sessionId || data.id
       };
       
       console.log('📊 [DEBUG] Session adaptée:', JSON.stringify(adaptedSession, null, 2));
       console.log('🔍 [DEBUG] QR Code trouvé:', !!adaptedSession.qrCode);
+      console.log('🔍 [DEBUG] QR Code value:', adaptedSession.qrCode);
+      console.log('🔍 [DEBUG] QR Code type:', typeof adaptedSession.qrCode);
       console.log('🔍 [DEBUG] Status final:', adaptedSession.status);
       
       setSession(adaptedSession);
@@ -159,6 +166,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
   };
 
   const handleConnect = async () => {
+    console.log('1. handleConnect appelé');
     console.log('🚀 [DEBUG] Bouton connecter cliqué');
     const isHealthy = await checkServerHealth();
     console.log('🏥 [DEBUG] Serveur healthy:', isHealthy);
