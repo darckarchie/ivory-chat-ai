@@ -13,16 +13,22 @@ import fs from 'fs';
 import path from 'path';
 
 const app = express();
-const server = require('http').createServer(app);
+const server = express().listen();
 const io = new Server(server, {
     cors: {
         origin: ["http://localhost:5173", "http://localhost:8080", "http://localhost:3000"],
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
 app.use(cors());
 app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Stocker les sessions WhatsApp par restaurant
 const sessions = new Map();

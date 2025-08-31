@@ -41,7 +41,9 @@ class BaileysIntegrationService {
         timeout: 10000,
         reconnection: true,
         reconnectionAttempts: 5,
-        reconnectionDelay: 2000
+        reconnectionDelay: 2000,
+        forceNew: true,
+        autoConnect: false
       });
 
       this.socket.on('connect', () => {
@@ -53,12 +55,27 @@ class BaileysIntegrationService {
       });
 
       this.socket.on('connect_error', (error) => {
-        console.warn('⚠️ Serveur Baileys non disponible. Démarrez-le avec: npm run whatsapp:start');
+        console.warn('⚠️ Serveur Baileys non disponible. Démarrez-le avec: npm run whatsapp:start', error.message);
         // Ne pas lancer d'erreur, juste avertir
       });
 
+      // Tenter la connexion seulement si nécessaire
+      this.attemptConnection();
+
     } catch (error) {
       console.warn('⚠️ Impossible d\'initialiser la connexion Baileys');
+    }
+  }
+
+  private async attemptConnection() {
+    try {
+      // Vérifier d'abord si le serveur est disponible
+      const isAvailable = await this.checkServerHealth();
+      if (isAvailable && this.socket) {
+        this.socket.connect();
+      }
+    } catch (error) {
+      console.warn('⚠️ Connexion WebSocket différée - serveur non disponible');
     }
   }
 
