@@ -1,13 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { WhatsAppConnectionCard } from "@/components/dashboard/WhatsAppConnectionCard";
 import { ArrowLeft, MessageSquare, CheckCircle, Zap, QrCode, Smartphone } from "lucide-react";
 
 const WhatsAppSetup = () => {
   const navigate = useNavigate();
-  const [isConnected, setIsConnected] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,69 +58,13 @@ const WhatsAppSetup = () => {
             </div>
           </div>
 
-          {/* Connection Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Assistant WhatsApp IA
-                <Badge variant="secondary">Baileys</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!isConnected ? (
-                <div className="text-center py-8">
-                  <div className="bg-primary/10 p-6 rounded-2xl w-fit mx-auto mb-6">
-                    <MessageSquare className="h-12 w-12 text-primary" />
-                  </div>
-                  
-                  <h3 className="text-xl font-bold mb-3">
-                    Serveur WhatsApp Baileys
-                  </h3>
-                  <p className="text-muted-foreground text-sm mb-6">
-                    Connectez votre WhatsApp Business via notre serveur Baileys local
-                  </p>
-                  
-                  <Button 
-                    onClick={() => setIsConnected(true)}
-                    className="w-full"
-                    size="lg"
-                  >
-                    <Zap className="h-5 w-5 mr-2" />
-                    Activer l'IA WhatsApp
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="bg-success/10 p-6 rounded-2xl w-fit mx-auto mb-6">
-                    <CheckCircle className="h-12 w-12 text-success" />
-                  </div>
-                  
-                  <h3 className="text-xl font-bold mb-3 text-success">
-                    WhatsApp Connecté !
-                  </h3>
-                  <p className="text-muted-foreground text-sm mb-6">
-                    Votre assistant IA répond maintenant automatiquement à vos clients
-                  </p>
-                  
-                  <div className="space-y-4">
-                    <div className="bg-success/10 rounded-xl p-4">
-                      <p className="text-sm text-muted-foreground mb-1">Numéro connecté</p>
-                      <p className="font-mono text-lg text-success font-bold">+225 07 00 00 00 01</p>
-                    </div>
-                    
-                    <Button 
-                      onClick={() => navigate('/dashboard')}
-                      className="w-full"
-                      size="lg"
-                    >
-                      Retour au Dashboard
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Connection Card - VRAI COMPOSANT AVEC DEBUG */}
+          <WhatsAppConnectionCard 
+            restaurantId="demo"
+            onStatusChange={(connected) => {
+              console.log('🔄 [DEBUG] Status changed in WhatsAppSetup:', connected);
+            }}
+          />
           
           {/* Instructions */}
           <Card className="mt-8">
