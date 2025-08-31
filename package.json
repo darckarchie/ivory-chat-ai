@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "whatsapp:start": "node start-whatsapp-server.js",
-    "whatsapp:dev": "concurrently \"npm run dev\" \"npm run whatsapp:start\""
+    "whatsapp:dev": "concurrently \"npm run dev\" \"npm run whatsapp:start\"",
+    "whatsapp:logs": "tail -f logs/whatsapp.log"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.0",

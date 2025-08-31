@@ -3,10 +3,8 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useWhatsAppConnection } from '@/lib/hooks/use-whatsapp-connection';
+import { useBaileysConnection } from '@/lib/hooks/use-baileys-connection';
 import { 
   MessageSquare, 
   QrCode, 
@@ -17,8 +15,7 @@ import {
   AlertCircle,
   RefreshCw,
   Settings,
-  Send,
-  Phone
+  Server
 } from 'lucide-react';
 
 interface WhatsAppConnectionCardProps {
@@ -35,11 +32,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
     error,
     connect,
     disconnect
-  } = useWhatsAppConnection(restaurantId);
-  
-  const [testPhone, setTestPhone] = useState('+225');
-  const [testMessage, setTestMessage] = useState('');
-  const [isSendingTest, setIsSendingTest] = useState(false);
+  } = useBaileysConnection(restaurantId);
 
   useEffect(() => {
     onStatusChange?.(isConnected);
@@ -52,6 +45,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       console.error('Erreur connexion:', error);
     }
   };
+
   const getStatusBadge = () => {
     if (!session) return null;
 
@@ -99,12 +93,20 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       return (
         <div className="text-center py-6">
           <div className="bg-primary/10 p-4 rounded-full w-fit mx-auto mb-4">
-            <MessageSquare className="h-8 w-8 text-primary" />
+            <Server className="h-8 w-8 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">Connecter WhatsApp IA</h3>
+          <h3 className="text-lg font-semibold mb-2">Serveur WhatsApp Baileys</h3>
           <p className="text-muted-foreground text-sm mb-6">
-            Activez votre assistant IA pour répondre automatiquement à vos clients 24/7
+            Connectez votre WhatsApp Business via notre serveur Baileys local
           </p>
+          
+          <Alert className="mb-4 text-left">
+            <Server className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              <strong>Serveur requis :</strong> Démarrez le serveur Baileys avec <code className="bg-muted px-1 rounded">npm run whatsapp:start</code>
+            </AlertDescription>
+          </Alert>
+          
           <Button 
             onClick={handleConnect}
             disabled={isLoading}
@@ -114,12 +116,12 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Connexion...
+                Connexion au serveur...
               </>
             ) : (
               <>
                 <Zap className="h-4 w-4 mr-2" />
-                Activer l'IA WhatsApp
+                Connecter WhatsApp
               </>
             )}
           </Button>
@@ -130,19 +132,23 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
     if (session.status === 'qr_pending' && session.qrCode) {
       return (
         <div className="text-center py-6">
-          <h3 className="text-lg font-semibold mb-4">Scannez le QR Code</h3>
+          <h3 className="text-lg font-semibold mb-4 text-primary">Scannez le QR Code Baileys</h3>
           
-          <div className="bg-white p-4 rounded-2xl border-2 border-primary/30 mb-6 inline-block shadow-lg">
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white p-4 rounded-2xl border-2 border-primary/30 mb-6 inline-block shadow-lg"
+          >
             <img 
               src={session.qrCode} 
               alt="QR Code WhatsApp à scanner" 
-              className="w-64 h-64 object-contain"
+              className="w-56 h-56 object-contain"
               onError={(e) => {
                 console.error('Erreur chargement QR code:', e);
                 e.currentTarget.style.display = 'none';
               }}
             />
-          </div>
+          </motion.div>
 
           <div className="space-y-3 text-sm text-muted-foreground mb-6">
             <div className="flex items-center gap-2 justify-center">
@@ -178,23 +184,23 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="bg-green-100 p-4 rounded-full w-fit mx-auto mb-4 text-center"
+            className="bg-success/20 p-4 rounded-full w-fit mx-auto mb-4 text-center"
           >
-            <CheckCircle className="h-8 w-8 text-green-600" />
+            <CheckCircle className="h-8 w-8 text-success" />
           </motion.div>
           
-          <h3 className="text-lg font-semibold mb-2 text-green-800 text-center">
-            WhatsApp IA Activé !
+          <h3 className="text-lg font-semibold mb-2 text-success text-center">
+            WhatsApp Baileys Connecté !
           </h3>
           
           <p className="text-muted-foreground text-sm mb-4 text-center">
-            Votre assistant répond maintenant automatiquement à vos clients
+            Votre serveur Baileys est connecté et l'IA répond automatiquement
           </p>
 
           {session.phoneNumber && (
-            <div className="bg-muted/50 rounded-lg p-3 mb-4">
+            <div className="bg-success/10 rounded-lg p-3 mb-4 border border-success/20">
               <p className="text-xs text-muted-foreground">Numéro connecté</p>
-              <p className="font-mono text-sm">{session.phoneNumber}</p>
+              <p className="font-mono text-sm text-success font-semibold">{session.phoneNumber}</p>
             </div>
           )}
 
@@ -208,6 +214,12 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
             </p>
           )}
 
+          {session.messageCount !== undefined && (
+            <div className="bg-primary/10 rounded-lg p-3 mb-4 border border-primary/20">
+              <p className="text-xs text-muted-foreground">Messages traités</p>
+              <p className="font-bold text-primary">{session.messageCount}</p>
+            </div>
+          )}
           <div className="flex gap-2 justify-center">
             <Button variant="outline" size="sm" onClick={() => {}}>
               <Settings className="h-4 w-4 mr-2" />
@@ -228,11 +240,19 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
             <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
           <h3 className="text-lg font-semibold mb-2 text-red-800">
-            Erreur de connexion
+            Erreur Serveur Baileys
           </h3>
           <p className="text-muted-foreground text-sm mb-4">
             {error || session.error || 'Une erreur est survenue lors de la connexion'}
           </p>
+          
+          <Alert className="mb-4 text-left">
+            <Server className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              Vérifiez que le serveur Baileys fonctionne sur le port 3001
+            </AlertDescription>
+          </Alert>
+          
           <Button onClick={handleConnect} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             Réessayer
@@ -249,8 +269,8 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Assistant WhatsApp IA
+            <Server className="h-5 w-5" />
+            Serveur WhatsApp Baileys
           </CardTitle>
           {getStatusBadge()}
         </div>
@@ -259,32 +279,32 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       <CardContent>
         {renderConnectionStatus()}
 
-        {/* Informations sur l'IA */}
+        {/* Informations sur le serveur Baileys */}
         {isConnected && (
           <div className="mt-6 pt-6 border-t border-border">
-            <h4 className="font-semibold mb-3 text-sm">Capacités de votre IA :</h4>
+            <h4 className="font-semibold mb-3 text-sm">Serveur Baileys actif :</h4>
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-success rounded-full"></div>
                 <span>Réponses automatiques</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Gestion des prix</span>
+                <div className="w-2 h-2 bg-success rounded-full"></div>
+                <span>WebSocket temps réel</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Horaires d'ouverture</span>
+                <div className="w-2 h-2 bg-success rounded-full"></div>
+                <span>Sessions persistantes</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Informations livraison</span>
+                <div className="w-2 h-2 bg-success rounded-full"></div>
+                <span>IA intégrée</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Erreur de connexion */}
+        {/* Erreur serveur */}
         {error && (
           <Alert className="mt-4">
             <AlertCircle className="h-4 w-4" />
