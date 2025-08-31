@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { WhatsAppConnectionCard } from "@/components/dashboard/WhatsAppConnectionCard";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageSquare, CheckCircle, Zap, Users, Clock } from "lucide-react";
+import { ArrowLeft, MessageSquare, CheckCircle, Zap, Users, Clock, QrCode, Smartphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -209,24 +209,6 @@ const WhatsAppSetup = () => {
           animation-delay: 4s;
         }
       `}</style>
-    </div>
-  );
-};
-
-export default WhatsAppSetup;
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs font-bold text-primary">2</div>
-                <p>Scannez le QR code avec votre WhatsApp Business</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs font-bold text-primary">3</div>
-                <p>Votre assistant IA répond automatiquement 24/7 !</p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
     </div>
   );
 };
