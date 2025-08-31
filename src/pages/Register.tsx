@@ -19,6 +19,7 @@ const registerSchema = z.object({
   lastName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   businessName: z.string().min(2, "Le nom de l'entreprise doit contenir au moins 2 caractères"),
   phone: z.string().regex(/^\d{10}$/, "Format: 10 chiffres (ex: 0123456789)"),
+  email: z.string().email("Email invalide"),
   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères")
 });
 
@@ -42,6 +43,7 @@ const Register = () => {
       lastName: "",
       businessName: "",
       phone: "",
+      email: "",
       password: ""
     }
   });
@@ -61,12 +63,8 @@ const Register = () => {
     setIsSubmitting(true);
     
     try {
-      // Générer un email temporaire basé sur le numéro
-      const cleanPhone = formData.phone.replace(/[^0-9]/g, '');
-      const email = `user-${cleanPhone}@whalix.ci`;
-      
       await signUp({
-        email,
+        email: formData.email,
         password: formData.password,
         first_name: formData.firstName,
         last_name: formData.lastName,
@@ -100,11 +98,8 @@ const Register = () => {
     setIsSubmitting(true);
     
     try {
-      const cleanPhone = formData.phone.replace(/[^0-9]/g, '');
-      const email = `user-${cleanPhone}@whalix.ci`;
-      
       await signUp({
-        email,
+        email: formData.email,
         password: formData.password,
         first_name: formData.firstName,
         last_name: formData.lastName,
@@ -629,6 +624,28 @@ const Register = () => {
                     )}
                   />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-medium">
+                        <User className="h-4 w-4" />
+                        Email
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="email"
+                          placeholder="votre@email.com" 
+                          className="h-12 bg-white/80 border-gray-200 focus:border-primary focus:ring-primary/20"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}

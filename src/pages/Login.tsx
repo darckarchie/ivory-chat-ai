@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Phone, Lock } from "lucide-react"
+import { User, Lock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/auth/AuthProvider"
 
 const loginSchema = z.object({
-  phone: z.string().regex(/^\d{10}$/, "Format: 10 chiffres (ex: 0123456789)"),
+  email: z.string().email("Email invalide"),
   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
 })
 
@@ -27,7 +27,7 @@ const Login = () => {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      phone: "",
+      email: "",
       password: "",
     },
   })
@@ -36,11 +36,7 @@ const Login = () => {
     setIsLoading(true)
     
     try {
-      // Générer l'email à partir du numéro
-      const cleanPhone = data.phone.replace(/[^0-9]/g, '')
-      const email = `user-${cleanPhone}@whalix.ci`
-      
-      await signIn(email, data.password)
+      await signIn(data.email, data.password)
       
       toast({
         title: "✅ Connexion réussie !",
@@ -75,26 +71,19 @@ const Login = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="phone"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Numéro de téléphone
+                      <User className="h-4 w-4" />
+                      Email
                     </FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-muted-foreground">
-                          <span className="text-sm font-medium">🇨🇮 +225</span>
-                          <div className="w-px h-4 bg-border"></div>
-                        </div>
-                        <Input 
-                          placeholder="0123456789" 
-                          className="pl-20"
-                          maxLength={10}
-                          {...field} 
-                        />
-                      </div>
+                      <Input 
+                        type="email"
+                        placeholder="votre@email.com" 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
