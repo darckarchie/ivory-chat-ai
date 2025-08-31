@@ -1,11 +1,88 @@
 import { useState, useEffect, useCallback } from 'react';
-import { greenAPIService } from '@/lib/services/green-api-service';
+import { baileysService } from '@/lib/services/baileys-integration';
 import { LiveReply } from '../types';
 
 export function useLiveFeed(businessId: string) {
   const [messages, setMessages] = useState<LiveReply[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Écouter les nouveaux messages du serveur Baileys
+  useEffect(() => {
+    if (businessId === 'demo') {
+      const unsubscribeMessages = baileysService.onMessageReceived(businessId, (message) => {
+        const newMessage: LiveReply = {
+          id: message.id,
+          at: new Date(message.timestamp).toISOString(),
+          customer: message.pushName || 'Client',
+          customer_phone: message.from,
+          last_message: message.text,
+          status: 'waiting',
+          confidence: 0
+        };
+        
+        setMessages(prev => {
+          const existing = prev.find(m => m.id === message.id);
+          if (existing) return prev;
+          
+          const updated = [newMessage, ...prev].slice(0, 20);
+          localStorage.setItem('whalix_live_messages', JSON.stringify(updated));
+          return updated;
+        });
+      });
+
+      const unsubscribeAI = baileysService.onAIReply(businessId, (replyData) => {
+        setMessages(prev => {
+          const updated = prev.map(msg => 
+            msg.id === replyData.messageId 
+              ? { 
+                  ...msg, 
+                  status: 'ai_replied' as const, 
+                  reply_preview: replyData.reply, 
+                  confidence: replyData.confidence 
+                }
+              : msg
+          );
+          localStorage.setItem('whalix_live_messages', JSON.stringify(updated));
+          return updated;
+        });
+      });
+
+      return () => {
+        unsubscribeMessages();
+        unsubscribeAI();
+      };
+    }
+  }, [businessId]);
+
+  // Écouter les événements personnalisés pour les mises à jour UI
+  useEffect(() => {
+    const handleNewMessage = (event: CustomEvent) => {
+      const newMessage = event.detail;
+      setMessages(prev => {
+        const existing = prev.find(m => m.id === newMessage.id);
+        if (existing) return prev;
+        return [newMessage, ...prev].slice(0, 20);
+      });
+    };
+
+    const handleAIReply = (event: CustomEvent) => {
+      const replyData = event.detail;
+      setMessages(prev => prev.map(msg => 
+        msg.id === replyData.messageId 
+          ? { ...msg, status: 'ai_replied', reply_preview: replyData.reply, confidence: replyData.confidence }
+          : msg
+      ));
+    };
+
+    window.addEventListener('whalix-new-message', handleNewMessage as EventListener);
+    window.addEventListener('whalix-ai-reply', handleAIReply as EventListener);
+
+    return () => {
+      window.removeEventListener('whalix-new-message', handleNewMessage as EventListener);
+      window.removeEventListener('whalix-ai-reply', handleAIReply as EventListener);
+    };
+  }, []);
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -17,32 +94,6 @@ export function useLiveFeed(businessId: string) {
           setMessages(localMessages);
           setError(null);
           return;
-        }
-        
-        // Essayer de récupérer les messages depuis Green API
-        try {
-          const incomingMessages = await greenAPIService.getIncomingMessages();
-          if (incomingMessages.length > 0) {
-            const newMessages = incomingMessages.map(msg => ({
-              id: msg.id,
-              at: new Date(msg.timestamp * 1000).toISOString(),
-              customer: msg.pushName || 'Client',
-              customer_phone: msg.from,
-              last_message: msg.text,
-              status: 'waiting' as const,
-              confidence: 0
-            }));
-            
-            setMessages(prev => {
-              const existing = prev.map(m => m.id);
-              const filtered = newMessages.filter(m => !existing.includes(m.id));
-              const updated = [...filtered, ...prev].slice(0, 20);
-              localStorage.setItem('whalix_live_messages', JSON.stringify(updated));
-              return updated;
-            });
-          }
-        } catch (apiError) {
-          console.log('Green API non disponible, utilisation du mode démo');
         }
       }
 
