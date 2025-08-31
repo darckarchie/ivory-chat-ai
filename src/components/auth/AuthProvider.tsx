@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, supabaseService } from '@/lib/services/supabase-service';
+import { supabase } from '@/lib/supabase';
+import { supabaseService } from '@/lib/services/supabase-service';
 import { useUserStore } from '@/lib/store';
 
 interface AuthContextType {
