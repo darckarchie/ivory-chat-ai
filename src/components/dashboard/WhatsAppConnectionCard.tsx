@@ -36,6 +36,14 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
     try {
     console.log('📊 [DEBUG] Session status changed:', session?.status);
     onStatusChange?.(session?.status === 'connected');
+  } catch (error) {
+    console.error('Error checking server health:', error);
+  }
+  };
+
+  useEffect(() => {
+    console.log('📊 [DEBUG] Session status changed:', session?.status);
+    onStatusChange?.(session?.status === 'connected');
   }, [session?.status, onStatusChange]);
 
   const getStatusBadge = () => {
@@ -382,7 +390,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
   };
 
   return (
-    console.log('🏷️ [DEBUG] Génération badge pour status:', session.status);
+    <Card className="relative overflow-hidden bg-gradient-card border-border/50 shadow-glow">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary/5 rounded-full animate-pulse"></div>
         <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent/5 rounded-full animate-pulse"></div>
