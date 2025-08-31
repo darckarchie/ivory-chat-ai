@@ -76,10 +76,10 @@ export function useLiveFeed(businessId: string) {
 
   // Simuler de nouveaux messages en mode démo
   const simulateNewMessage = useCallback(() => {
-    if (businessId !== 'demo' || !isConnected) return;
+    if (businessId !== 'demo') return;
     
     const random = Math.random();
-    if (random > 0.85) { // 15% de chance d'avoir un nouveau message
+    if (random > 0.90) { // 10% de chance d'avoir un nouveau message
       const customers = ['Kouassi', 'Aminata', 'Yao', 'Fatou', 'Ibrahim'];
       const messages = [
         'Bonjour, c\'est ouvert ?',
@@ -118,7 +118,7 @@ export function useLiveFeed(businessId: string) {
         });
       }, 3000);
     }
-  }, [businessId, isConnected]);
+  }, [businessId]);
 
   useEffect(() => {
     // Fetch initial

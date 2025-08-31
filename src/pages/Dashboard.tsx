@@ -176,9 +176,10 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+          <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5"></div>
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center gap-3">
                   <div className="bg-primary/20 p-2 rounded-lg">
                     <Zap className="h-5 w-5 text-primary" />
@@ -192,6 +193,7 @@ const Dashboard = () => {
                 </div>
                 <Button 
                   variant={whatsappConnected ? "outline" : "default"}
+                  className={whatsappConnected ? "" : "bg-gradient-primary hover:shadow-glow"}
                   onClick={() => navigate('/dashboard/whatsapp')}
                 >
                   {whatsappConnected ? 'Configurer' : 'Activer IA'}
