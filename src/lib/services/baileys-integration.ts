@@ -148,7 +148,13 @@ class BaileysIntegrationService {
       const response = await fetch(`${this.backendUrl}/api/whatsapp/status/${restaurantId}`);
       
       if (!response.ok) {
-        return null;
+        const errorSession: BaileysSession = {
+          restaurantId,
+          status: 'error',
+          error: `Serveur WhatsApp indisponible (${response.status}). Démarrez le serveur avec: npm run whatsapp:start`
+        };
+        this.sessions.set(restaurantId, errorSession);
+        return errorSession;
       }
 
       const data = await response.json();
@@ -166,7 +172,13 @@ class BaileysIntegrationService {
       return session;
     } catch (error) {
       console.error('❌ Erreur vérification statut:', error);
-      return null;
+      const errorSession: BaileysSession = {
+        restaurantId,
+        status: 'error',
+        error: 'Serveur WhatsApp indisponible. Démarrez le serveur avec: npm run whatsapp:start'
+      };
+      this.sessions.set(restaurantId, errorSession);
+      return errorSession;
     }
   }
 
