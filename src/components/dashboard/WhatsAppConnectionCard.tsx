@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useBaileysConnection } from '@/lib/hooks/use-baileys-connection';
+import { useWhatsAppSession } from '@/lib/hooks/use-whatsapp-session';
+import { useMetrics } from '@/components/dashboard/MetricsProvider';
 import { 
   MessageSquare, 
   QrCode, 
@@ -24,7 +25,8 @@ interface WhatsAppConnectionCardProps {
 }
 
 export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAppConnectionCardProps) {
-  const { session, isLoading, error, connect, disconnect, sendTestMessage } = useBaileysConnection(restaurantId);
+  const { session, isLoading, connect, disconnect } = useWhatsAppSession();
+  const { logEvent } = useMetrics();
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   
   const addDebugLog = (message: string) => {
@@ -34,25 +36,36 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
   };
 
   useEffect(() => {
-    onStatusChange?.(session?.status === 'connected');
-  }, [session?.status, onStatusChange]);
-
-  const checkServerHealth = async () => {
-    addDebugLog('2. Vérification serveur Railway...');
-    try {
-      const response = await fetch('https://whalix-server-railway-production.up.railway.app/health');
-      addDebugLog(`Serveur Railway: ${response.status} ${response.ok ? '✅' : '❌'}`);
-      return response.ok;
-    } catch (error) {
-      addDebugLog(`❌ Erreur serveur: ${error}`);
-      return false;
-    }
-  };
-
-  useEffect(() => {
     console.log('📊 [DEBUG] Session status changed:', session?.status);
     onStatusChange?.(session?.status === 'connected');
+    
+    // Logger les changements de statut
+    if (session?.status) {
+      addDebugLog(`Status: ${session.status}`);
+    }
   }, [session?.status, onStatusChange]);
+
+  const handleConnect = async () => {
+    addDebugLog('1. Début connexion WhatsApp...');
+    try {
+      await connect();
+      await logEvent('qr_generated', { timestamp: new Date().toISOString() });
+      addDebugLog('✅ Connexion initiée avec succès');
+    } catch (error) {
+      addDebugLog(`❌ Erreur: ${error}`);
+    }
+  };
+  
+  const handleDisconnect = async () => {
+    addDebugLog('Déconnexion...');
+    try {
+      await disconnect();
+      await logEvent('connection_closed', { manual: true });
+      addDebugLog('✅ Déconnecté avec succès');
+    } catch (error) {
+      addDebugLog(`❌ Erreur déconnexion: ${error}`);
+    }
+  };
 
   const getStatusBadge = () => {
     console.log('🏷️ [DEBUG] Génération badge pour status:', session?.status);
@@ -124,6 +137,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
               disabled={isLoading}
               className="w-full bg-gradient-primary hover:shadow-glow"
               size="lg"
+              onClick={handleConnect}
             >
               {isLoading ? (
                 <>
@@ -391,6 +405,7 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
               Configurer
             </Button>
             <Button variant="destructive" size="sm" onClick={disconnect}>
+            <Button variant="destructive" size="sm" onClick={handleDisconnect}>
               Déconnecter
             </Button>
           </div>
