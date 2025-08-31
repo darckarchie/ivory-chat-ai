@@ -53,11 +53,12 @@ class BaileysIntegrationService {
       });
 
       this.socket.on('connect_error', (error) => {
-        console.error('❌ Erreur connexion Baileys:', error);
+        console.warn('⚠️ Serveur Baileys non disponible. Démarrez-le avec: npm run whatsapp:start');
+        // Ne pas lancer d'erreur, juste avertir
       });
 
     } catch (error) {
-      console.error('❌ Erreur initialisation socket:', error);
+      console.warn('⚠️ Impossible d\'initialiser la connexion Baileys');
     }
   }
 
@@ -69,7 +70,14 @@ class BaileysIntegrationService {
       // Vérifier si le serveur Baileys est disponible
       const isServerAvailable = await this.checkServerHealth();
       if (!isServerAvailable) {
-        throw new Error('Serveur WhatsApp indisponible. Démarrez le serveur avec: npm run whatsapp:start');
+        // Retourner une session en mode démo si serveur indisponible
+        const demoSession: BaileysSession = {
+          restaurantId,
+          status: 'error',
+          error: 'Serveur WhatsApp indisponible. Démarrez le serveur avec: npm run whatsapp:start'
+        };
+        this.sessions.set(restaurantId, demoSession);
+        return demoSession;
       }
 
       const response = await fetch(`${this.backendUrl}/api/whatsapp/connect/${restaurantId}`, {
@@ -184,10 +192,15 @@ class BaileysIntegrationService {
   // Vérifier la santé du serveur
   private async checkServerHealth(): Promise<boolean> {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      
       const response = await fetch(`${this.backendUrl}/health`, {
         method: 'GET',
-        timeout: 5000
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
       console.warn('⚠️ Serveur Baileys non disponible');
