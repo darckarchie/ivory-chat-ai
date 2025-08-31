@@ -16,7 +16,7 @@ const registerSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
   lastName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   businessName: z.string().min(2, "Le nom de l'entreprise doit contenir au moins 2 caractères"),
-  phone: z.string().regex(/^\+225\d{8,10}$/, "Format: +225XXXXXXXX")
+  phone: z.string().regex(/^\d{10}$/, "Format: 10 chiffres (ex: 0123456789)")
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -36,7 +36,7 @@ const Register = () => {
       firstName: "",
       lastName: "",
       businessName: "",
-      phone: "+225"
+      phone: ""
     }
   });
 
@@ -593,11 +593,18 @@ const Register = () => {
                         Numéro de téléphone
                       </FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="+225XXXXXXXX" 
-                          className="h-12 bg-white/80 border-gray-200 focus:border-primary focus:ring-primary/20"
-                          {...field} 
-                        />
+                        <div className="relative">
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-muted-foreground">
+                            <span className="text-sm font-medium">🇨🇮 +225</span>
+                            <div className="w-px h-4 bg-border"></div>
+                          </div>
+                          <Input 
+                            placeholder="0123456789" 
+                            className="h-12 bg-white/80 border-gray-200 focus:border-primary focus:ring-primary/20 pl-20"
+                            maxLength={10}
+                            {...field} 
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
