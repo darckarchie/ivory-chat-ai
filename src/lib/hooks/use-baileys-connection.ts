@@ -28,22 +28,23 @@ export function useBaileysConnection(restaurantId: string) {
       });
       console.log('🏥 [DEBUG] Health response:', response.status, response.ok);
       return response.ok;
+      console.log('🏥 [DEBUG] Health check response:', response.status, response.ok);
     } catch (error) {
-      console.error('❌ [DEBUG] Health check failed:', error);
+      console.warn('⚠️ [DEBUG] Baileys server unavailable:', error);
       return false;
     }
   };
 
   // Créer une session WhatsApp
   const createSession = async () => {
-    console.log('🔗 [DEBUG] Création session pour:', restaurantId);
+    console.log('🔗 [DEBUG] Creating session for:', restaurantId);
     setIsLoading(true);
     setError(null);
     
     try {
       setSession(prev => ({ ...prev, status: 'connecting' }));
       
-      console.log('📡 [DEBUG] Envoi requête vers:', `${BACKEND_URL}/api/session/create`);
+      console.log('📡 [DEBUG] Sending request to:', `${BACKEND_URL}/api/whatsapp/connect/${restaurantId}`);
       const response = await fetch(`${BACKEND_URL}/api/session/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,12 +55,12 @@ export function useBaileysConnection(restaurantId: string) {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ [DEBUG] Erreur response:', errorText);
+        console.error('❌ [DEBUG] Error response:', errorText);
         throw new Error(`Erreur serveur: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('📡 [DEBUG] Réponse serveur complète:', JSON.stringify(data, null, 2));
+      console.log('📡 [DEBUG] Complete server response:', JSON.stringify(data, null, 2));
       
       // Adapter la réponse selon la structure du serveur
       const adaptedSession: BaileysSession = {
@@ -71,18 +72,18 @@ export function useBaileysConnection(restaurantId: string) {
         error: data.error
       };
       
-      console.log('📊 [DEBUG] Session adaptée:', JSON.stringify(adaptedSession, null, 2));
-      console.log('🔍 [DEBUG] QR Code trouvé:', !!adaptedSession.qrCode);
+      console.log('📊 [DEBUG] Adapted session:', JSON.stringify(adaptedSession, null, 2));
+      console.log('🔍 [DEBUG] QR Code found:', !!adaptedSession.qrCode);
       console.log('🔍 [DEBUG] QR Code value:', adaptedSession.qrCode);
-      console.log('🔍 [DEBUG] Status final:', adaptedSession.status);
+      console.log('🔍 [DEBUG] Final status:', adaptedSession.status);
       
       setSession(adaptedSession);
       
       // Si QR généré, simuler une connexion après 10 secondes pour la démo
       if (adaptedSession.status === 'qr_pending') {
-        console.log('⏰ [DEBUG] Simulation connexion dans 10 secondes...');
+        console.log('⏰ [DEBUG] Simulating connection in 10 seconds...');
         setTimeout(() => {
-          console.log('✅ [DEBUG] Simulation connexion réussie');
+          console.log('✅ [DEBUG] Simulated connection successful');
           setSession(prev => ({
             ...prev,
             status: 'connected',
@@ -94,7 +95,7 @@ export function useBaileysConnection(restaurantId: string) {
       }
       
     } catch (error) {
-      console.error('❌ [DEBUG] Erreur création session:', error);
+      console.error('❌ [DEBUG] Session creation error:', error);
       setError(error instanceof Error ? error.message : 'Erreur de connexion');
       setSession(prev => ({ 
         ...prev, 
@@ -108,7 +109,7 @@ export function useBaileysConnection(restaurantId: string) {
 
   // Connecter WhatsApp
   const connect = useCallback(async () => {
-    console.log('1. [DEBUG] handleConnect appelé');
+    console.log('🔗 [DEBUG] Connect function called');
     
     // Vérifier la santé du serveur d'abord
     const isHealthy = await checkServerHealth();

@@ -25,20 +25,28 @@ interface WhatsAppConnectionCardProps {
 
 export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAppConnectionCardProps) {
   const { session, isLoading, error, connect, disconnect, sendTestMessage } = useBaileysConnection(restaurantId);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  
+  const addDebugLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setDebugLogs(prev => [`[${timestamp}] ${message}`, ...prev].slice(0, 10));
+    console.log(`🔍 [DEBUG] ${message}`);
+  };
 
   useEffect(() => {
     onStatusChange?.(session?.status === 'connected');
   }, [session?.status, onStatusChange]);
 
   const checkServerHealth = async () => {
-    console.log('2. [DEBUG] Check health...');
-    console.log('2. Check health...');
+    addDebugLog('2. Vérification serveur Railway...');
     try {
-    console.log('📊 [DEBUG] Session status changed:', session?.status);
-    onStatusChange?.(session?.status === 'connected');
-  } catch (error) {
-    console.error('Error checking server health:', error);
-  }
+      const response = await fetch('https://whalix-server-railway-production.up.railway.app/health');
+      addDebugLog(`Serveur Railway: ${response.status} ${response.ok ? '✅' : '❌'}`);
+      return response.ok;
+    } catch (error) {
+      addDebugLog(`❌ Erreur serveur: ${error}`);
+      return false;
+    }
   };
 
   useEffect(() => {
@@ -139,6 +147,20 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
               </AlertDescription>
             </Alert>
           )}
+          
+          {/* Debug visible */}
+          {debugLogs.length > 0 && (
+            <div className="mt-4 bg-muted/50 rounded-lg p-3 border">
+              <h4 className="text-xs font-semibold text-muted-foreground mb-2">Debug en temps réel :</h4>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {debugLogs.map((log, index) => (
+                  <div key={index} className="text-xs font-mono text-foreground bg-background/50 p-1 rounded">
+                    {log}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -161,6 +183,20 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
           <p className="text-muted-foreground text-sm mb-6">
             Génération du QR code WhatsApp
           </p>
+          
+          {/* Debug visible pendant connexion */}
+          {debugLogs.length > 0 && (
+            <div className="bg-muted/50 rounded-lg p-3 border max-w-md mx-auto">
+              <h4 className="text-xs font-semibold text-muted-foreground mb-2">Progression :</h4>
+              <div className="space-y-1 max-h-24 overflow-y-auto">
+                {debugLogs.slice(0, 5).map((log, index) => (
+                  <div key={index} className="text-xs font-mono text-foreground bg-background/50 p-1 rounded">
+                    {log}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -265,6 +301,10 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
             onClick={connect}
             className="w-full"
             size="sm"
+            onClick={() => {
+              addDebugLog('1. Clic sur Activer IA');
+              connect();
+            }}
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Nouveau QR Code
