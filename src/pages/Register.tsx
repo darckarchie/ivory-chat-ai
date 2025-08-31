@@ -16,7 +16,8 @@ const registerSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
   lastName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   businessName: z.string().min(2, "Le nom de l'entreprise doit contenir au moins 2 caractères"),
-  phone: z.string().regex(/^\d{10}$/, "Format: 10 chiffres (ex: 0123456789)")
+  phone: z.string().regex(/^\d{10}$/, "Format: 10 chiffres (ex: 0123456789)"),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères")
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -36,7 +37,8 @@ const Register = () => {
       firstName: "",
       lastName: "",
       businessName: "",
-      phone: ""
+      phone: "",
+      password: ""
     }
   });
 
@@ -605,6 +607,28 @@ const Register = () => {
                             {...field} 
                           />
                         </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-medium">
+                        <User className="h-4 w-4" />
+                        Mot de passe
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password"
+                          placeholder="Minimum 6 caractères" 
+                          className="h-12 bg-white/80 border-gray-200 focus:border-primary focus:ring-primary/20"
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
