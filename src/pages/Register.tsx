@@ -9,7 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
-import { useUserStore, BusinessSector } from "@/lib/store";
+import { BusinessSector } from "@/lib/store";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Building, Phone, User, Search, Check, ChevronRight, Sparkles, Star, TrendingUp } from "lucide-react";
 
 const registerSchema = z.object({
@@ -28,8 +30,10 @@ const Register = () => {
   const [selectedSector, setSelectedSector] = useState<BusinessSector | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredSector, setHoveredSector] = useState<BusinessSector | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const setUser = useUserStore(state => state.setUser);
+  const { signUp } = useAuth();
+  const { toast } = useToast();
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -51,40 +55,81 @@ const Register = () => {
     setSelectedSector(sector);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!formData || !selectedSector) return;
     
-    const user = {
-      id: crypto.randomUUID(),
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      phone: formData.phone,
-      businessName: formData.businessName,
-      businessSector: selectedSector,
-      isAuthenticated: true,
-      onboardingComplete: true
-    };
+    setIsSubmitting(true);
     
-    setUser(user);
-    navigate(`/dashboard?secteur=${selectedSector}`);
+    try {
+      // Générer un email temporaire basé sur le numéro
+      const cleanPhone = formData.phone.replace(/[^0-9]/g, '');
+      const email = `${cleanPhone}@whalix.ci`;
+      
+      await signUp({
+        email,
+        password: formData.password,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        business_name: formData.businessName,
+        business_sector: selectedSector,
+        phone: formData.phone
+      });
+      
+      toast({
+        title: "✅ Compte créé avec succès !",
+        description: "Bienvenue dans Whalix. Votre dashboard est prêt.",
+      });
+      
+      navigate(`/dashboard?secteur=${selectedSector}`);
+      
+    } catch (error) {
+      console.error('Erreur inscription:', error);
+      toast({
+        title: "❌ Erreur lors de l'inscription",
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDefaultChoice = () => {
+  const handleDefaultChoice = async () => {
     if (!formData) return;
     
-    const user = {
-      id: crypto.randomUUID(),
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      phone: formData.phone,
-      businessName: formData.businessName,
-      businessSector: 'commerce' as BusinessSector,
-      isAuthenticated: true,
-      onboardingComplete: true
-    };
+    setIsSubmitting(true);
     
-    setUser(user);
-    navigate('/dashboard?secteur=commerce');
+    try {
+      const cleanPhone = formData.phone.replace(/[^0-9]/g, '');
+      const email = `${cleanPhone}@whalix.ci`;
+      
+      await signUp({
+        email,
+        password: formData.password,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        business_name: formData.businessName,
+        business_sector: 'commerce',
+        phone: formData.phone
+      });
+      
+      toast({
+        title: "✅ Compte créé avec succès !",
+        description: "Secteur Commerce sélectionné par défaut.",
+      });
+      
+      navigate('/dashboard?secteur=commerce');
+      
+    } catch (error) {
+      console.error('Erreur inscription:', error);
+      toast({
+        title: "❌ Erreur lors de l'inscription",
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const sectorOptions = [
