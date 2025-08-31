@@ -34,6 +34,9 @@ class BaileysIntegrationService {
   }
 
   private initializeSocket() {
+    return; // TEMPORAIRE: pas de WebSocket pour l'instant - serveur Railway n'a pas Socket.io
+    
+    /* WEBSOCKET CODE COMMENTÉ TEMPORAIREMENT
     try {
       this.socket = io(this.backendUrl, {
         transports: ['websocket', 'polling'],
@@ -64,9 +67,13 @@ class BaileysIntegrationService {
     } catch (error) {
       console.warn('⚠️ Impossible d\'initialiser la connexion Baileys');
     }
+    */
   }
 
   private async attemptConnection() {
+    return; // TEMPORAIRE: pas de WebSocket
+    
+    /* WEBSOCKET CODE COMMENTÉ
     try {
       // Vérifier d'abord si le serveur est disponible
       const isAvailable = await this.checkServerHealth();
@@ -76,6 +83,7 @@ class BaileysIntegrationService {
     } catch (error) {
       console.warn('⚠️ Connexion WebSocket différée - serveur non disponible');
     }
+    */
   }
 
   // Connecter WhatsApp pour un restaurant
@@ -237,6 +245,9 @@ class BaileysIntegrationService {
 
   // S'abonner aux événements de session
   private subscribeToSessionEvents(restaurantId: string) {
+    return; // TEMPORAIRE: pas de WebSocket
+    
+    /* WEBSOCKET CODE COMMENTÉ
     if (!this.socket) return;
 
     // S'abonner aux événements de ce restaurant
@@ -280,6 +291,7 @@ class BaileysIntegrationService {
       console.log(`🤖 Réponse IA pour ${restaurantId}:`, replyData);
       this.notifyAIReplyListeners(restaurantId, replyData);
     });
+    */
   }
 
   // Gestionnaires d'événements
