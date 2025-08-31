@@ -9,32 +9,24 @@ const WhatsAppSetup = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-primary/20 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
-        <div className="absolute top-0 -right-4 w-72 h-72 bg-accent/20 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-secondary/20 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
-      </div>
-
+    <div className="min-h-screen bg-gradient-subtle">
       {/* Header */}
-      <div className="bg-white/10 backdrop-blur-xl border-b border-white/20 sticky top-0 z-40">
+      <div className="bg-background/95 backdrop-blur-sm border-b sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={() => navigate('/dashboard')}
-              className="text-white/80 hover:text-white hover:bg-white/10"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold flex items-center gap-2 text-white">
+              <h1 className="text-xl font-bold flex items-center gap-2">
                 <MessageSquare className="h-6 w-6" />
                 Configuration WhatsApp IA
               </h1>
-              <p className="text-sm text-white/80">
+              <p className="text-sm text-muted-foreground">
                 Connectez votre WhatsApp pour activer l'assistant IA
               </p>
             </div>
@@ -42,7 +34,7 @@ const WhatsAppSetup = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 relative z-10">
+      <div className="container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -54,7 +46,7 @@ const WhatsAppSetup = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-4xl md:text-5xl font-bold text-white mb-6"
+              className="text-3xl md:text-4xl font-bold text-foreground mb-6"
             >
               Activez votre{" "}
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -66,7 +58,7 @@ const WhatsAppSetup = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-xl text-white/80 mb-8 max-w-2xl mx-auto leading-relaxed"
+              className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed"
             >
               Connectez votre WhatsApp Business et transformez chaque conversation en opportunité de vente
             </motion.p>
@@ -78,15 +70,15 @@ const WhatsAppSetup = () => {
               transition={{ delay: 0.3 }}
               className="flex flex-wrap justify-center gap-6 mb-8"
             >
-              <div className="flex items-center gap-2 text-white/90">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <CheckCircle className="h-5 w-5 text-success" />
                 <span>Réponses instantanées 24/7</span>
               </div>
-              <div className="flex items-center gap-2 text-white/90">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Zap className="h-5 w-5 text-accent" />
                 <span>IA adaptée à votre secteur</span>
               </div>
-              <div className="flex items-center gap-2 text-white/90">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Users className="h-5 w-5 text-secondary" />
                 <span>Conversations illimitées</span>
               </div>
@@ -120,9 +112,9 @@ const WhatsAppSetup = () => {
             transition={{ delay: 0.5 }}
             className="mt-12"
           >
-            <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <Card className="bg-card border border-border">
               <CardContent className="p-8">
-                <h3 className="font-bold text-xl text-white mb-6 text-center">
+                <h3 className="font-bold text-xl text-card-foreground mb-6 text-center">
                   Comment ça marche ?
                 </h3>
                 <div className="grid md:grid-cols-3 gap-6">
@@ -130,8 +122,8 @@ const WhatsAppSetup = () => {
                     <div className="bg-gradient-primary p-4 rounded-2xl w-fit mx-auto mb-4">
                       <QrCode className="h-8 w-8 text-white" />
                     </div>
-                    <h4 className="font-semibold text-white mb-2">1. Générer QR Code</h4>
-                    <p className="text-white/80 text-sm">
+                    <h4 className="font-semibold text-card-foreground mb-2">1. Générer QR Code</h4>
+                    <p className="text-muted-foreground text-sm">
                       Cliquez sur "Activer l'IA" pour générer votre QR code unique
                     </p>
                   </div>
@@ -140,8 +132,8 @@ const WhatsAppSetup = () => {
                     <div className="bg-gradient-primary p-4 rounded-2xl w-fit mx-auto mb-4">
                       <Smartphone className="h-8 w-8 text-white" />
                     </div>
-                    <h4 className="font-semibold text-white mb-2">2. Scanner WhatsApp</h4>
-                    <p className="text-white/80 text-sm">
+                    <h4 className="font-semibold text-card-foreground mb-2">2. Scanner WhatsApp</h4>
+                    <p className="text-muted-foreground text-sm">
                       Scannez avec votre WhatsApp Business en 30 secondes
                     </p>
                   </div>
@@ -150,8 +142,8 @@ const WhatsAppSetup = () => {
                     <div className="bg-gradient-primary p-4 rounded-2xl w-fit mx-auto mb-4">
                       <Zap className="h-8 w-8 text-white" />
                     </div>
-                    <h4 className="font-semibold text-white mb-2">3. IA Active 24/7</h4>
-                    <p className="text-white/80 text-sm">
+                    <h4 className="font-semibold text-card-foreground mb-2">3. IA Active 24/7</h4>
+                    <p className="text-muted-foreground text-sm">
                       Votre assistant répond automatiquement à tous vos clients
                     </p>
                   </div>
@@ -167,23 +159,23 @@ const WhatsAppSetup = () => {
             transition={{ delay: 0.6 }}
             className="mt-8"
           >
-            <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <Card className="bg-gradient-card border border-border">
               <CardContent className="p-6">
-                <h3 className="font-bold text-lg text-white mb-4 text-center">
+                <h3 className="font-bold text-lg text-card-foreground mb-4 text-center">
                   Résultats moyens avec Whalix IA
                 </h3>
                 <div className="grid grid-cols-3 gap-6 text-center">
                   <div>
                     <div className="text-3xl font-bold text-success mb-1">+40%</div>
-                    <p className="text-white/80 text-sm">Ventes</p>
+                    <p className="text-muted-foreground text-sm">Ventes</p>
                   </div>
                   <div>
                     <div className="text-3xl font-bold text-accent mb-1">24/7</div>
-                    <p className="text-white/80 text-sm">Disponibilité</p>
+                    <p className="text-muted-foreground text-sm">Disponibilité</p>
                   </div>
                   <div>
                     <div className="text-3xl font-bold text-secondary mb-1">&lt;3s</div>
-                    <p className="text-white/80 text-sm">Réponse</p>
+                    <p className="text-muted-foreground text-sm">Réponse</p>
                   </div>
                 </div>
               </CardContent>
@@ -191,24 +183,6 @@ const WhatsAppSetup = () => {
           </motion.div>
         </motion.div>
       </div>
-
-      <style jsx>{`
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob {
-          animation: blob 8s infinite ease-in-out;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
     </div>
   );
 };

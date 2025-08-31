@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -151,7 +150,8 @@ export function DashboardMobile({
           />
         </motion.div>
       </div>
-
     </div>
   );
 }
+
+export default DashboardMobile;
