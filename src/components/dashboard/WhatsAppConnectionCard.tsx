@@ -67,11 +67,20 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       
       const data = await response.json();
       console.log('📡 Réponse serveur:', data);
-      setSession(data);
+      
+      // Adapter la réponse selon la structure du serveur
+      const adaptedSession = {
+        ...data,
+        qrCode: data.status?.qr || data.qrCode || data.qr,
+        status: data.status?.status || data.status || 'connecting'
+      };
+      
+      console.log('📊 Session adaptée:', adaptedSession);
+      setSession(adaptedSession);
       
       // Commencer à vérifier le statut
-      if (data.sessionId && data.status !== 'connected') {
-        startStatusPolling(data.sessionId);
+      if (adaptedSession.sessionId && adaptedSession.status !== 'connected') {
+        startStatusPolling(adaptedSession.sessionId);
       }
     } catch (error) {
       console.error('❌ Erreur création session:', error);
@@ -89,8 +98,17 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       if (response.ok) {
         const data = await response.json();
         console.log('📊 Statut reçu:', data);
-        setSession(data);
-        return data;
+        
+        // Adapter la réponse selon la structure du serveur
+        const adaptedSession = {
+          ...data,
+          qrCode: data.status?.qr || data.qrCode || data.qr,
+          status: data.status?.status || data.status || 'connecting'
+        };
+        
+        console.log('📊 Session adaptée:', adaptedSession);
+        setSession(adaptedSession);
+        return adaptedSession;
       }
     } catch (error) {
       console.error('Erreur vérification statut:', error);
@@ -263,15 +281,23 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
               whileHover={{ scale: 1.02 }}
               className="bg-white p-6 rounded-2xl border-2 border-primary/30 mb-6 inline-block shadow-glow"
             >
-              <img 
-                src={session.qrCode} 
-                alt="QR Code WhatsApp" 
-                className="w-64 h-64 object-contain"
-                onError={(e) => {
-                  console.error('Erreur chargement QR code:', e);
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
+              {session?.qrCode && (
+                session.qrCode.startsWith('http') ? (
+                  <img 
+                    src={session.qrCode} 
+                    alt="QR Code WhatsApp" 
+                    className="w-64 h-64 object-contain"
+                  />
+                ) : (
+                  <div className="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                    <div className="text-center">
+                      <QrCode className="h-16 w-16 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">Mode Test</p>
+                      <p className="text-xs text-gray-400 mt-2">En attente du serveur Baileys</p>
+                    </div>
+                  </div>
+                )
+              )}
             </motion.div>
           </motion.div>
 
