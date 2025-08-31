@@ -23,14 +23,13 @@ export interface BaileysMessage {
 
 class BaileysIntegrationService {
   private socket: Socket | null = null;
-  private backendUrl: string;
+  private backendUrl = 'https://whalix-server-railway-production.up.railway.app';
   private sessions = new Map<string, BaileysSession>();
   private messageListeners = new Map<string, (message: BaileysMessage) => void>();
   private aiReplyListeners = new Map<string, (reply: any) => void>();
   private sessionListeners = new Map<string, (session: BaileysSession) => void>();
 
   constructor() {
-    this.backendUrl = import.meta.env.VITE_WHATSAPP_BACKEND_URL || 'http://localhost:3001';
     this.initializeSocket();
   }
 

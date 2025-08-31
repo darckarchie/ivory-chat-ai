@@ -1,4 +1,4 @@
-const BACKEND_URL = import.meta.env.VITE_WHATSAPP_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = 'https://whalix-server-railway-production.up.railway.app';
 
 export interface WhatsAppSession {
   restaurantId: string;
