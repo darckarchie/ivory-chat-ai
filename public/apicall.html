@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Whalix API</title>
+</head>
+<body>
+    <h1>Test API WhatsApp</h1>
+    <button onclick="createSession()">Créer Session</button>
+    <div id="qrcode"></div>
+    <div id="status"></div>
+
+    <script>
+    async function createSession() {
+        const response = await fetch('http://72.60.80.2:3000/api/session/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({sessionId: 'test'})
+        });
+        const data = await response.json();
+        
+        if(data.qrCode) {
+            document.getElementById('qrcode').innerHTML = 
+                `<img src="${data.qrCode}" style="width:256px;height:256px;">`;
+        }
+        document.getElementById('status').innerText = 'Status: ' + data.status;
+    }
+    </script>
+</body>
+</html>
