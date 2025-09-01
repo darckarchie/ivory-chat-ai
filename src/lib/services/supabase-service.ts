@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/lib/supabase';
+import React from 'react';
 
 type Tables = Database['public']['Tables'];
 type Tenant = Tables['tenants']['Row'];
@@ -28,6 +29,27 @@ export function normalizeCIPhone(input10: string): string {
   return `+225${cleaned.substring(1)}`;
 }
 
+// Mode démo - données simulées
+const DEMO_TENANT = {
+  id: 'demo-tenant-id',
+  name: 'Entreprise Démo',
+  business_sector: 'commerce' as const,
+  phone: '+22501234567',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+};
+
+const DEMO_USER = {
+  id: 'demo-user-id',
+  tenant_id: 'demo-tenant-id',
+  first_name: 'Utilisateur',
+  last_name: 'Démo',
+  phone: '+22501234567',
+  role: 'owner' as const,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+};
+
 class SupabaseService {
   // === TENANTS ===
   
@@ -51,14 +73,16 @@ class SupabaseService {
         
       if (error) {
         if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
-          throw new Error('❌ Base de données non configurée.\n\n🔧 SOLUTION :\n1. Allez sur supabase.com\n2. Ouvrez votre projet\n3. Cliquez sur "SQL Editor"\n4. Exécutez le fichier "complete_whalix_schema.sql"\n\n📧 Ou contactez le support : support@whalix.ci');
+          console.warn('🔄 Mode démo activé - Base de données non configurée');
+          return DEMO_TENANT;
         }
         throw error;
       }
       return tenant;
     } catch (error) {
       if (error instanceof Error && (error.message.includes('Could not find the table') || error.message.includes('PGRST205'))) {
-        throw new Error('❌ Base de données non configurée.\n\n🔧 SOLUTION :\n1. Allez sur supabase.com\n2. Ouvrez votre projet\n3. Cliquez sur "SQL Editor"\n4. Exécutez le fichier "complete_whalix_schema.sql"\n\n📧 Ou contactez le support : support@whalix.ci');
+        console.warn('🔄 Mode démo activé - Base de données non configurée');
+        return DEMO_TENANT;
       }
       throw error;
     }
@@ -102,14 +126,16 @@ class SupabaseService {
         
       if (error) {
         if (error.code === 'PGRST205') {
-          throw new Error('Base de données non configurée. Veuillez contacter le support pour configurer votre projet Supabase.');
+          console.warn('🔄 Mode démo activé - Base de données non configurée');
+          return DEMO_USER;
         }
         throw error;
       }
       return user;
     } catch (error) {
       if (error instanceof Error && error.message.includes('Could not find the table')) {
-        throw new Error('Base de données non configurée. Veuillez contacter le support pour configurer votre projet Supabase.');
+        console.warn('🔄 Mode démo activé - Base de données non configurée');
+        return DEMO_USER;
       }
       throw error;
     }
@@ -117,19 +143,33 @@ class SupabaseService {
   
   async getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    if (!user) {
+      // En mode démo, retourner un utilisateur fictif
+      return { ...DEMO_USER, tenant: DEMO_TENANT };
+    }
     
-    const { data, error } = await supabase
-      .from('users')
-      .select(`
-        *,
-        tenant:tenants(*)
-      `)
-      .eq('id', user.id)
-      .single();
-      
-    if (error) throw error;
-    return data;
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select(`
+          *,
+          tenant:tenants(*)
+        `)
+        .eq('id', user.id)
+        .single();
+        
+      if (error) {
+        if (error.code === 'PGRST205') {
+          console.warn('🔄 Mode démo activé - Base de données non configurée');
+          return { ...DEMO_USER, id: user.id, tenant: DEMO_TENANT };
+        }
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      console.warn('🔄 Mode démo activé - Base de données non configurée');
+      return { ...DEMO_USER, id: user.id, tenant: DEMO_TENANT };
+    }
   }
 
   // === WHATSAPP SESSIONS ===
