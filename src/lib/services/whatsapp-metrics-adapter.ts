@@ -1,33 +1,39 @@
-const API_URL = import.meta.env.VITE_WHATSAPP_API_URL || 'http://localhost:3001';
+const API_URL = 'http://72.60.80.2:3000';
 
 export class WhatsAppMetricsAdapter {
   
   async getDashboardMetrics(sessionId = 'test1') {
     try {
-      // Récupérer toutes les données disponibles depuis vos endpoints
+      // Récupérer toutes les données disponibles depuis les endpoints existants
       const [health, info, status, conversations] = await Promise.all([
-        fetch(`${API_URL}/health`).then(r => r.json()).catch(() => ({ status: 'error', sessions: 0, conversations: 0, uptime: 0 })),
-        fetch(`${API_URL}/`).then(r => r.json()).catch(() => ({ stats: { totalMessages: 0, totalConversations: 0 } })),
-        fetch(`${API_URL}/api/session/${sessionId}/status`).then(r => r.json()).catch(() => ({ status: 'disconnected', messageCount: 0 })),
-        fetch(`${API_URL}/api/conversations`).then(r => r.json()).catch(() => ({ conversations: [] }))
+        fetch(`${API_URL}/health`).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${API_URL}/`).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${API_URL}/api/session/${sessionId}/status`).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${API_URL}/api/conversations`).then(r => r.ok ? r.json() : null).catch(() => null)
       ]);
+
+      // Si l'API n'est pas disponible, utiliser des données de démo
+      if (!health && !info && !status && !conversations) {
+        console.warn('⚠️ API WhatsApp non disponible, utilisation du mode démo');
+        return this.getDemoMetrics(sessionId);
+      }
 
       // Calculer les métriques depuis les données disponibles
       const now = new Date();
       const todayStart = new Date(now.setHours(0,0,0,0));
       
       // Conversations d'aujourd'hui
-      const todayConversations = conversations.conversations?.filter(c => 
+      const todayConversations = conversations?.conversations?.filter(c => 
         new Date(c.startTime) >= todayStart
       ) || [];
       
-      // Messages d'aujourd'hui (approximation depuis les conversations)
+      // Messages d'aujourd'hui
       const messagesToday = todayConversations.reduce((sum, c) => 
         sum + (c.messageCount || 0), 0
       );
 
-      // Messages en attente (conversations avec dernier message inbound récent)
-      const pendingMessages = conversations.conversations?.filter(c => {
+      // Messages en attente
+      const pendingMessages = conversations?.conversations?.filter(c => {
         const lastMsg = c.lastMessage;
         if (!lastMsg || lastMsg.type !== 'inbound') return false;
         
@@ -39,7 +45,7 @@ export class WhatsAppMetricsAdapter {
       // Transformer en format métriques dashboard
       return {
         whatsapp: {
-          isConnected: status?.status === 'connected',
+          isConnected: status?.status === 'connected' || false,
           status: status?.status || 'disconnected',
           phoneNumber: status?.phoneNumber || null,
           sessionId: status?.sessionId || sessionId,
@@ -50,17 +56,17 @@ export class WhatsAppMetricsAdapter {
         
         messages: {
           today: messagesToday,
-          total: info.stats?.totalMessages || 0,
+          total: info?.stats?.totalMessages || 0,
           pending: pendingMessages,
           waiting: pendingMessages, // Alias pour compatibilité
           replied: Math.max(0, messagesToday - pendingMessages)
         },
         
         conversations: {
-          active: conversations.conversations?.length || 0,
-          total: info.stats?.totalConversations || 0,
+          active: conversations?.conversations?.length || 0,
+          total: info?.stats?.totalConversations || 0,
           new_today: todayConversations.length,
-          list: conversations.conversations || []
+          list: conversations?.conversations || []
         },
         
         ai: {
@@ -72,15 +78,15 @@ export class WhatsAppMetricsAdapter {
         },
         
         customers: {
-          total: info.stats?.totalConversations || 0,
+          total: info?.stats?.totalConversations || 0,
           new_today: todayConversations.length,
-          returning: Math.max(0, (info.stats?.totalConversations || 0) - todayConversations.length)
+          returning: Math.max(0, (info?.stats?.totalConversations || 0) - todayConversations.length)
         },
         
         server: {
-          uptime: health.uptime || 0,
-          status: health.status || 'unknown',
-          sessions: health.sessions || 0,
+          uptime: health?.uptime || 0,
+          status: health?.status || 'unknown',
+          sessions: health?.sessions || 0,
           server_name: "Whalix VPS Simple"
         },
         
@@ -95,19 +101,68 @@ export class WhatsAppMetricsAdapter {
     } catch (error) {
       console.error('Erreur récupération métriques API:', error);
       
-      // Retourner des métriques vides en cas d'erreur
-      return {
-        whatsapp: { isConnected: false, status: 'error' },
-        messages: { today: 0, total: 0, pending: 0, waiting: 0, replied: 0 },
-        conversations: { active: 0, total: 0, new_today: 0, list: [] },
-        ai: { response_time: 0, success_rate: 0, auto_handled: 0, human_handoff: 0 },
-        customers: { total: 0, new_today: 0, returning: 0 },
-        server: { uptime: 0, status: 'error', sessions: 0 },
-        meta: { lastUpdated: new Date(), dataSource: 'error', apiUrl: API_URL }
-      };
+      // Utiliser les métriques de démo en cas d'erreur
+      return this.getDemoMetrics(sessionId);
     }
   }
 
+  // Métriques de démo quand l'API n'est pas disponible
+  private getDemoMetrics(sessionId: string) {
+    return {
+      whatsapp: {
+        isConnected: false,
+        status: 'disconnected',
+        phoneNumber: null,
+        sessionId: sessionId,
+        messageCount: 0,
+        uptime: 0,
+        qrCode: null
+      },
+      
+      messages: {
+        today: 0,
+        total: 0,
+        pending: 0,
+        waiting: 0,
+        replied: 0
+      },
+      
+      conversations: {
+        active: 0,
+        total: 0,
+        new_today: 0,
+        list: []
+      },
+      
+      ai: {
+        response_time: 2.1,
+        success_rate: 94.5,
+        auto_handled: 0,
+        human_handoff: 0,
+        confidence_avg: 0.85
+      },
+      
+      customers: {
+        total: 0,
+        new_today: 0,
+        returning: 0
+      },
+      
+      server: {
+        uptime: 0,
+        status: 'disconnected',
+        sessions: 0,
+        server_name: "API Non Disponible"
+      },
+      
+      meta: {
+        lastUpdated: new Date(),
+        dataSource: 'demo',
+        apiUrl: API_URL,
+        sessionId: sessionId
+      }
+    };
+  }
   // Polling pour mises à jour temps réel
   startPolling(callback: (metrics: any) => void, interval = 5000) {
     const poll = async () => {
@@ -116,6 +171,8 @@ export class WhatsAppMetricsAdapter {
         callback(metrics);
       } catch (error) {
         console.error('Erreur polling métriques:', error);
+        // En cas d'erreur, utiliser les métriques de démo
+        callback(this.getDemoMetrics('test1'));
       }
     };
     
@@ -132,10 +189,16 @@ export class WhatsAppMetricsAdapter {
   async getConversationsForMessagesPage() {
     try {
       const response = await fetch(`${API_URL}/api/conversations`);
+      
+      if (!response.ok) {
+        console.warn('⚠️ API conversations non disponible');
+        return [];
+      }
+      
       const data = await response.json();
       
       // Transformer au format attendu par la page Messages
-      return data.conversations?.map(conv => ({
+      return data?.conversations?.map(conv => ({
         id: conv.phone,
         customer: conv.name || 'Client',
         customer_phone: conv.phone,
@@ -153,10 +216,15 @@ export class WhatsAppMetricsAdapter {
   // Vérifier la santé de l'API
   async checkAPIHealth() {
     try {
-      const response = await fetch(`${API_URL}/health`, { 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(`${API_URL}/health`, {
         method: 'GET',
-        timeout: 5000 
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);

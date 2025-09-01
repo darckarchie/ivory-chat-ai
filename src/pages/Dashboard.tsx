@@ -73,7 +73,7 @@ const Dashboard = () => {
         const convs = await whatsappMetricsAdapter.getConversationsForMessagesPage();
         setConversations(convs);
       } catch (error) {
-        console.warn('🔄 API WhatsApp non disponible, mode démo activé');
+        console.warn('⚠️ API WhatsApp non disponible:', error);
         setConversations([]);
       }
     };

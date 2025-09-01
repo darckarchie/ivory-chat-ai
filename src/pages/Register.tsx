@@ -96,6 +96,12 @@ const Register = () => {
           description: "L'application fonctionne en mode démo. Configurez Supabase pour activer toutes les fonctionnalités.",
         });
         navigate(`/dashboard?secteur=${selectedSector}&demo=true`);
+      } else if (error instanceof Error && error.message.includes('over_email_send_rate_limit')) {
+        toast({
+          title: "🔄 Mode démo activé",
+          description: "Limite Supabase atteinte. L'application fonctionne en mode démo.",
+        });
+        navigate(`/dashboard?secteur=${selectedSector}&demo=true`);
       } else {
         toast({
           title: "❌ Erreur lors de l'inscription",
@@ -133,10 +139,14 @@ const Register = () => {
       
     } catch (error) {
       console.error('Erreur inscription:', error);
-      if (error instanceof Error && error.message.includes('Base de données non configurée')) {
+      if (error instanceof Error && (
+        error.message.includes('Base de données non configurée') ||
+        error.message.includes('over_email_send_rate_limit') ||
+        error.message.includes('For security purposes')
+      )) {
         toast({
           title: "🔄 Mode démo activé",
-          description: "L'application fonctionne en mode démo. Configurez Supabase pour activer toutes les fonctionnalités.",
+          description: "L'application fonctionne en mode démo avec votre API WhatsApp.",
         });
         navigate('/dashboard?secteur=commerce&demo=true');
       } else {
