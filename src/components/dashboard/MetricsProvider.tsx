@@ -1,39 +1,47 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabaseService } from '@/lib/services/supabase-service';
+import { useDashboardMetrics } from '@/lib/hooks/use-dashboard-metrics';
+import { DashboardMetrics } from '@/lib/types/dashboard-metrics';
 import { useAuth } from '@/components/auth/AuthProvider';
 
 interface MetricsContextType {
-  metrics: any;
+  metrics: DashboardMetrics;
   loading: boolean;
   refresh: () => Promise<void>;
   logEvent: (type: string, payload?: any) => Promise<void>;
+  updateWhatsAppMetrics: (data: any) => void;
+  addMessage: (message: any) => void;
+  markMessageReplied: (messageId: string, isAI?: boolean) => void;
+  addOrder: (orderData: any) => void;
 }
 
 const MetricsContext = createContext<MetricsContextType | null>(null);
 
 export function MetricsProvider({ children }: { children: React.ReactNode }) {
   const { user, tenant } = useAuth();
-  const [metrics, setMetrics] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const tenantId = tenant?.id || 'demo';
+  
+  const {
+    metrics,
+    isLoading,
+    error,
+    updateWhatsAppMetrics,
+    addMessage,
+    markMessageReplied,
+    addOrder,
+    refresh
+  } = useDashboardMetrics(tenantId);
 
-  const loadMetrics = async () => {
-    if (!tenant?.id) return;
-    
-    try {
-      setLoading(true);
-      const data = await supabaseService.getTenantMetrics(tenant.id);
-      setMetrics(data);
-    } catch (error) {
-      console.error('Erreur chargement métriques:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const logEvent = async (type: string, payload: any = {}) => {
-    if (!tenant?.id || !user?.id) return;
+    if (!tenant?.id || !user?.id) {
+      console.log('📊 [DEMO] Événement:', type, payload);
+      return;
+    }
     
     try {
+      // Essayer de logger dans Supabase
+      const { supabaseService } = await import('@/lib/services/supabase-service');
+      
       await supabaseService.logEvent({
         tenant_id: tenant.id,
         user_id: user.id,
@@ -43,27 +51,24 @@ export function MetricsProvider({ children }: { children: React.ReactNode }) {
       
       // Recharger les métriques après un événement important
       if (['order_created', 'payment_confirmed', 'connection_open'].includes(type)) {
-        setTimeout(loadMetrics, 1000);
+        setTimeout(refresh, 1000);
       }
     } catch (error) {
       console.warn('🔄 Mode démo - Événement ignoré:', error);
     }
   };
 
-  useEffect(() => {
-    loadMetrics();
-    
-    // Recharger les métriques toutes les 30 secondes
-    const interval = setInterval(loadMetrics, 30000);
-    return () => clearInterval(interval);
-  }, [tenant?.id]);
 
   return (
     <MetricsContext.Provider value={{
       metrics,
-      loading,
-      refresh: loadMetrics,
-      logEvent
+      loading: isLoading,
+      refresh,
+      logEvent,
+      updateWhatsAppMetrics,
+      addMessage,
+      markMessageReplied,
+      addOrder
     }}>
       {children}
     </MetricsContext.Provider>

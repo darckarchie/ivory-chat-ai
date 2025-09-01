@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useUserStore, BusinessSector } from '@/lib/store';
-import { useDemoData } from '@/lib/hooks/use-demo-data';
 import { useLiveFeed } from '@/lib/hooks/use-live-feed';
+import { useMetrics } from '@/components/dashboard/MetricsProvider';
 import { getSectorFromString } from '@/lib/utils/sector-config';
 import { SectorId, KBItem } from '@/lib/types';
 import { motion } from "framer-motion";
@@ -33,6 +33,7 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const isAuthenticated = useUserStore(state => state.isAuthenticated());
   const user = useUserStore(state => state.user);
+  const { metrics, updateWhatsAppMetrics, addMessage, addOrder } = useMetrics();
   
   const [sector, setSector] = useState<SectorId>('commerce');
   const [kbItems, setKbItems] = useState<KBItem[]>([]);
@@ -64,7 +65,6 @@ const Dashboard = () => {
     }
   }, [searchParams, user]);
 
-  const { isFirstVisit, demoItems } = useDemoData(sector);
   const { messages } = useLiveFeed('demo');
   
   useEffect(() => {
@@ -72,13 +72,11 @@ const Dashboard = () => {
       const stored = localStorage.getItem('whalix_kb_items');
       if (stored) {
         setKbItems(JSON.parse(stored));
-      } else if (isFirstVisit && demoItems.length > 0) {
-        setKbItems(demoItems);
       }
     };
     
     loadItems();
-  }, [isFirstVisit, demoItems]);
+  }, []);
   
   const handleSaveItem = (itemData: Omit<KBItem, 'id' | 'business_id' | 'created_at' | 'updated_at'>) => {
     const now = new Date();
@@ -122,19 +120,12 @@ const Dashboard = () => {
   const waitingMessages = messages.filter(m => m.status === 'waiting').length;
   const whatsappConnected = true; // Simulé pour la démo
 
-  // Métriques pour le composant QuickMetrics
-  const dashboardMetrics = {
-    orders_today: salesMetrics.ordersToday,
-    reservations_today: 0,
-    quotes_today: 0,
-    messages_waiting: waitingMessages,
-    avg_response_min: 1.2,
-    revenue_today: salesMetrics.revenueToday,
-    vs_yesterday: {
-      orders: calculateTrend(salesMetrics.ordersToday, salesMetrics.ordersYesterday),
-      revenue: calculateTrend(salesMetrics.revenueToday, salesMetrics.revenueYesterday),
-      messages: 0
-    }
+  // Utiliser les métriques du provider
+  const dashboardMetrics = metrics || {
+    whatsapp: { messagesWaiting: waitingMessages },
+    business: { ordersToday: salesMetrics.ordersToday, revenueToday: salesMetrics.revenueToday },
+    realtime: { avgResponseTime: 1.2 },
+    trends: { ordersVsYesterday: calculateTrend(salesMetrics.ordersToday, salesMetrics.ordersYesterday) }
   };
 
   return (

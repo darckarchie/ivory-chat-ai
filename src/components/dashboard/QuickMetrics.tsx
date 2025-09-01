@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DashboardMetrics, SectorId } from "@/lib/types";
+import { SectorId } from "@/lib/types";
+import { DashboardMetrics } from "@/lib/types/dashboard-metrics";
 import { getConfig } from "@/lib/utils/sector-config";
 import { 
   ShoppingCart, 
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 
 interface QuickMetricsProps {
-  metrics: DashboardMetrics;
+  metrics: DashboardMetrics | any; // Compatibilité avec l'ancien format
   sector: SectorId;
 }
 
@@ -27,16 +28,16 @@ export function QuickMetrics({ metrics, sector }: QuickMetricsProps) {
       {
         id: 'primary',
         title: config.primaryLabel,
-        value: metrics[config.primaryMetric as keyof DashboardMetrics] as number,
+        value: metrics.business?.ordersToday || metrics.orders_today || 0,
         icon: ShoppingCart,
         color: 'text-green-600',
         bgColor: 'bg-green-50',
-        change: metrics.vs_yesterday?.orders
+        change: metrics.trends?.ordersVsYesterday || metrics.vs_yesterday?.orders
       },
       {
         id: 'secondary', 
         title: config.secondaryLabel,
-        value: metrics[config.secondaryMetric as keyof DashboardMetrics] as number,
+        value: metrics.business?.quotesRequested || metrics.reservations_today || 0,
         icon: Calendar,
         color: 'text-blue-600',
         bgColor: 'bg-blue-50'
@@ -44,19 +45,19 @@ export function QuickMetrics({ metrics, sector }: QuickMetricsProps) {
       {
         id: 'messages',
         title: 'Messages en attente',
-        value: metrics.messages_waiting,
+        value: metrics.whatsapp?.messagesWaiting || metrics.messages_waiting || 0,
         icon: MessageCircle,
-        color: metrics.messages_waiting > 0 ? 'text-red-600' : 'text-gray-600',
-        bgColor: metrics.messages_waiting > 0 ? 'bg-red-50' : 'bg-gray-50',
-        urgent: metrics.messages_waiting > 0
+        color: (metrics.whatsapp?.messagesWaiting || metrics.messages_waiting || 0) > 0 ? 'text-red-600' : 'text-gray-600',
+        bgColor: (metrics.whatsapp?.messagesWaiting || metrics.messages_waiting || 0) > 0 ? 'bg-red-50' : 'bg-gray-50',
+        urgent: (metrics.whatsapp?.messagesWaiting || metrics.messages_waiting || 0) > 0
       },
       {
         id: 'response',
         title: 'Temps de réponse',
-        value: `${Math.round(metrics.avg_response_min)}min`,
+        value: `${Math.round(metrics.realtime?.avgResponseTime || metrics.avg_response_min || 1.2)}min`,
         icon: Clock,
-        color: metrics.avg_response_min <= 5 ? 'text-green-600' : 'text-orange-600',
-        bgColor: metrics.avg_response_min <= 5 ? 'bg-green-50' : 'bg-orange-50'
+        color: (metrics.realtime?.avgResponseTime || metrics.avg_response_min || 1.2) <= 5 ? 'text-green-600' : 'text-orange-600',
+        bgColor: (metrics.realtime?.avgResponseTime || metrics.avg_response_min || 1.2) <= 5 ? 'bg-green-50' : 'bg-orange-50'
       }
     ];
 
