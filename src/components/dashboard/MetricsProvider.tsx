@@ -1,60 +1,43 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useDashboardMetrics } from '@/lib/hooks/use-dashboard-metrics';
-import { DashboardMetrics } from '@/lib/types/dashboard-metrics';
+import { useWhatsAppMetrics } from '@/hooks/use-whatsapp-metrics';
 import { useAuth } from '@/components/auth/AuthProvider';
 
 interface MetricsContextType {
-  metrics: DashboardMetrics;
+  metrics: any;
   loading: boolean;
+  error: string | null;
+  apiHealth: any;
   refresh: () => Promise<void>;
   logEvent: (type: string, payload?: any) => Promise<void>;
-  updateWhatsAppMetrics: (data: any) => void;
-  addMessage: (message: any) => void;
-  markMessageReplied: (messageId: string, isAI?: boolean) => void;
-  addOrder: (orderData: any) => void;
+  isConnected: boolean;
+  hasWaitingMessages: boolean;
+  getWaitingCount: () => number;
 }
 
 const MetricsContext = createContext<MetricsContextType | null>(null);
 
 export function MetricsProvider({ children }: { children: React.ReactNode }) {
   const { user, tenant } = useAuth();
-  const tenantId = tenant?.id || 'demo';
+  const sessionId = tenant?.id || 'test1';
   
   const {
     metrics,
-    isLoading,
+    loading,
     error,
-    updateWhatsAppMetrics,
-    addMessage,
-    markMessageReplied,
-    addOrder,
-    refresh
-  } = useDashboardMetrics(tenantId);
+    apiHealth,
+    refresh,
+    isConnected,
+    hasWaitingMessages,
+    getWaitingCount
+  } = useWhatsAppMetrics(sessionId);
 
 
   const logEvent = async (type: string, payload: any = {}) => {
-    if (!tenant?.id || !user?.id) {
-      console.log('📊 [DEMO] Événement:', type, payload);
-      return;
-    }
+    console.log('📊 [API] Événement:', type, payload);
     
-    try {
-      // Essayer de logger dans Supabase
-      const { supabaseService } = await import('@/lib/services/supabase-service');
-      
-      await supabaseService.logEvent({
-        tenant_id: tenant.id,
-        user_id: user.id,
-        type: type as any,
-        payload
-      });
-      
-      // Recharger les métriques après un événement important
-      if (['order_created', 'payment_confirmed', 'connection_open'].includes(type)) {
-        setTimeout(refresh, 1000);
-      }
-    } catch (error) {
-      console.warn('🔄 Mode démo - Événement ignoré:', error);
+    // Recharger les métriques après un événement important
+    if (['qr_generated', 'connection_open', 'message_sent'].includes(type)) {
+      setTimeout(refresh, 1000);
     }
   };
 
@@ -62,13 +45,14 @@ export function MetricsProvider({ children }: { children: React.ReactNode }) {
   return (
     <MetricsContext.Provider value={{
       metrics,
-      loading: isLoading,
+      loading,
+      error,
+      apiHealth,
       refresh,
       logEvent,
-      updateWhatsAppMetrics,
-      addMessage,
-      markMessageReplied,
-      addOrder
+      isConnected,
+      hasWaitingMessages,
+      getWaitingCount
     }}>
       {children}
     </MetricsContext.Provider>
