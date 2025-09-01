@@ -51,11 +51,23 @@ const Login = () => {
       
     } catch (error) {
       console.error('Erreur connexion:', error)
-      toast({
-        title: "❌ Erreur de connexion",
-        description: "Vérifiez votre numéro et mot de passe",
-        variant: "destructive"
-      })
+      
+      // Gestion spécifique des erreurs Supabase
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
+      
+      if (errorMessage.includes('Invalid login credentials')) {
+        toast({
+          title: "🔐 Identifiants incorrects",
+          description: "Vérifiez votre numéro de téléphone et votre mot de passe. Si vous n'avez pas de compte, créez-en un.",
+          variant: "destructive"
+        })
+      } else {
+        toast({
+          title: "❌ Erreur de connexion",
+          description: "Une erreur s'est produite. Veuillez réessayer.",
+          variant: "destructive"
+        })
+      }
     } finally {
       setIsLoading(false)
     }
