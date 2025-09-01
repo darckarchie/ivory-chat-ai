@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useWhatsAppMetrics } from '@/hooks/use-whatsapp-metrics';
+// import { useWhatsAppMetrics } from '@/hooks/use-whatsapp-metrics';
 import { useAuth } from '@/components/auth/AuthProvider';
 
 interface MetricsContextType {
@@ -20,16 +20,35 @@ export function MetricsProvider({ children }: { children: React.ReactNode }) {
   const { user, tenant } = useAuth();
   const sessionId = tenant?.id || 'test1';
   
-  const {
-    metrics,
-    loading,
-    error,
-    apiHealth,
-    refresh,
-    isConnected,
-    hasWaitingMessages,
-    getWaitingCount
-  } = useWhatsAppMetrics(sessionId);
+  // SUPABASE DÉSACTIVÉ - Métriques démo
+  const [metrics] = useState({
+    whatsapp: { isConnected: false },
+    messages: { pending: 0, today: 0 },
+    conversations: { active: 0 },
+    ai: { success_rate: 95 }
+  });
+  const [loading] = useState(false);
+  const [error] = useState(null);
+  const [apiHealth] = useState({ available: false });
+  
+  const refresh = async () => {
+    console.log('🔄 Refresh désactivé - Mode démo');
+  };
+  
+  const isConnected = false;
+  const hasWaitingMessages = false;
+  const getWaitingCount = () => 0;
+  
+  // const {
+  //   metrics,
+  //   loading,
+  //   error,
+  //   apiHealth,
+  //   refresh,
+  //   isConnected,
+  //   hasWaitingMessages,
+  //   getWaitingCount
+  // } = useWhatsAppMetrics(sessionId);
 
 
   const logEvent = async (type: string, payload: any = {}) => {

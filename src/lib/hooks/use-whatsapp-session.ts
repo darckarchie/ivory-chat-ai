@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabaseService } from '@/lib/services/supabase-service';
+// import { supabaseService } from '@/lib/services/supabase-service';
 import { useUserStore } from '@/lib/store';
 
 export interface WhatsAppSessionState {
@@ -22,22 +22,26 @@ export function useWhatsAppSession() {
     if (!user?.id) return;
     
     try {
-      const currentUser = await supabaseService.getCurrentUser();
-      if (!currentUser) return;
+      // SUPABASE DÉSACTIVÉ - Utiliser données démo
+      console.log('🔄 Mode démo - Session WhatsApp simulée');
+      return;
       
-      const dbSession = await supabaseService.getWhatsAppSession(currentUser.tenant_id);
+      // const currentUser = await supabaseService.getCurrentUser();
+      // if (!currentUser) return;
       
-      if (dbSession) {
-        setSession({
-          id: dbSession.id,
-          status: dbSession.status,
-          qrCode: dbSession.qr_code || undefined,
-          phoneNumber: dbSession.phone_number || undefined,
-          lastConnected: dbSession.last_seen_at ? new Date(dbSession.last_seen_at) : undefined,
-          error: dbSession.last_error || undefined,
-          messageCount: dbSession.message_count
-        });
-      }
+      // const dbSession = await supabaseService.getWhatsAppSession(currentUser.tenant_id);
+      
+      // if (dbSession) {
+      //   setSession({
+      //     id: dbSession.id,
+      //     status: dbSession.status,
+      //     qrCode: dbSession.qr_code || undefined,
+      //     phoneNumber: dbSession.phone_number || undefined,
+      //     lastConnected: dbSession.last_seen_at ? new Date(dbSession.last_seen_at) : undefined,
+      //     error: dbSession.last_error || undefined,
+      //     messageCount: dbSession.message_count
+      //   });
+      // }
     } catch (error) {
       console.error('Erreur chargement session:', error);
     }
@@ -51,20 +55,32 @@ export function useWhatsAppSession() {
     
     try {
       console.log('🔍 Début connexion WhatsApp...');
-      const currentUser = await supabaseService.getCurrentUser();
-      if (!currentUser) throw new Error('Profil utilisateur non trouvé');
+      
+      // SUPABASE DÉSACTIVÉ - Utiliser données démo
+      const currentUser = {
+        id: user.id,
+        tenant_id: 'demo-tenant',
+        first_name: user.firstName,
+        last_name: user.lastName
+      };
+      
+      // const currentUser = await supabaseService.getCurrentUser();
+      // if (!currentUser) throw new Error('Profil utilisateur non trouvé');
       
       // 1. Logger l'événement QR généré (mode démo si table manquante)
       try {
-        await supabaseService.logEvent({
-          tenant_id: currentUser.tenant_id,
-          user_id: currentUser.id,
-          type: 'qr_generated',
-          payload: { 
-            session_name: `whalix_${currentUser.tenant_id}`,
-            timestamp: new Date().toISOString()
-          }
-        });
+        // SUPABASE DÉSACTIVÉ - Log en console uniquement
+        console.log('📊 Événement QR généré (mode démo)');
+        
+        // await supabaseService.logEvent({
+        //   tenant_id: currentUser.tenant_id,
+        //   user_id: currentUser.id,
+        //   type: 'qr_generated',
+        //   payload: { 
+        //     session_name: `whalix_${currentUser.tenant_id}`,
+        //     timestamp: new Date().toISOString()
+        //   }
+        // });
         console.log('✅ Événement QR loggé');
       } catch (logError) {
         console.warn('⚠️ Logging non disponible (mode démo)');
@@ -73,12 +89,20 @@ export function useWhatsAppSession() {
       // 2. Créer/mettre à jour la session en DB (mode démo si table manquante)
       let dbSession;
       try {
-        dbSession = await supabaseService.createOrUpdateWhatsAppSession({
+        // SUPABASE DÉSACTIVÉ - Session démo
+        dbSession = {
+          id: 'demo-session',
           tenant_id: currentUser.tenant_id,
           user_id: currentUser.id,
-          status: 'connecting',
-          session_path: `/data/sessions/whalix_${currentUser.tenant_id}`
-        });
+          status: 'connecting'
+        };
+        
+        // dbSession = await supabaseService.createOrUpdateWhatsAppSession({
+        //   tenant_id: currentUser.tenant_id,
+        //   user_id: currentUser.id,
+        //   status: 'connecting',
+        //   session_path: `/data/sessions/whalix_${currentUser.tenant_id}`
+        // });
         console.log('✅ Session DB créée/mise à jour');
       } catch (dbError) {
         console.warn('⚠️ Base de données non disponible (mode démo)');
@@ -101,41 +125,46 @@ export function useWhatsAppSession() {
       // 3. Appeler l'API existante pour générer le QR
       try {
         const API_URL = 'http://72.60.80.2:3000';
-        console.log('🔍 Tentative connexion API WhatsApp...');
-        const response = await fetch(`${API_URL}/api/session/${currentUser.tenant_id}/status`, {
-          method: 'GET'
-        });
+        console.log('🔍 API WhatsApp désactivée - Mode démo complet');
         
-        if (!response.ok) {
-          throw new Error(`API non disponible: ${response.status}`);
-        }
+        // Mode démo complet - pas d'appel API
+        throw new Error('Mode démo - API désactivée');
         
-        const statusData = await response.json();
-        console.log('✅ Réponse API reçue:', statusData);
+        // console.log('🔍 Tentative connexion API WhatsApp...');
+        // const response = await fetch(`${API_URL}/api/session/${currentUser.tenant_id}/status`, {
+        //   method: 'GET'
+        // });
         
-        // Si pas de QR, essayer de créer une session
-        if (!statusData.qrCode && statusData.status !== 'connected') {
-          throw new Error('QR non disponible depuis API');
-        }
+        // if (!response.ok) {
+        //   throw new Error(`API non disponible: ${response.status}`);
+        // }
         
-        // Utiliser les données de l'API
-        setSession({
-          id: dbSession.id,
-          status: statusData.status === 'connected' ? 'connected' : 
-                  statusData.qrCode ? 'qr_pending' : 'connecting',
-          qrCode: statusData.qrCode,
-          phoneNumber: statusData.phoneNumber,
-          error: undefined
-        });
+        // const statusData = await response.json();
+        // console.log('✅ Réponse API reçue:', statusData);
         
-        if (statusData.status === 'connected') {
-          return; // Déjà connecté
-        }
+        // // Si pas de QR, essayer de créer une session
+        // if (!statusData.qrCode && statusData.status !== 'connected') {
+        //   throw new Error('QR non disponible depuis API');
+        // }
         
-        if (statusData.qrCode) {
-          // Commencer le polling pour vérifier le scan
-          startStatusPolling(currentUser.tenant_id, currentUser.id);
-        }
+        // // Utiliser les données de l'API
+        // setSession({
+        //   id: dbSession.id,
+        //   status: statusData.status === 'connected' ? 'connected' : 
+        //           statusData.qrCode ? 'qr_pending' : 'connecting',
+        //   qrCode: statusData.qrCode,
+        //   phoneNumber: statusData.phoneNumber,
+        //   error: undefined
+        // });
+        
+        // if (statusData.status === 'connected') {
+        //   return; // Déjà connecté
+        // }
+        
+        // if (statusData.qrCode) {
+        //   // Commencer le polling pour vérifier le scan
+        //   startStatusPolling(currentUser.tenant_id, currentUser.id);
+        // }
         
       } catch (apiError) {
         console.warn('⚠️ API non disponible, utilisation mode démo:', apiError);
@@ -215,38 +244,42 @@ export function useWhatsAppSession() {
   const startStatusPolling = useCallback((tenantId: string, userId: string) => {
     const checkStatus = async () => {
       try {
-        const API_URL = 'http://72.60.80.2:3000';
-        const response = await fetch(`${API_URL}/api/session/${tenantId}/status`);
+        // API DÉSACTIVÉE - Simulation démo
+        console.log('🔄 Polling désactivé - Mode démo');
+        return false;
         
-        if (response.ok) {
-          const data = await response.json();
+        // const API_URL = 'http://72.60.80.2:3000';
+        // const response = await fetch(`${API_URL}/api/session/${tenantId}/status`);
+        
+        // if (response.ok) {
+        //   const data = await response.json();
           
-          if (data.status === 'connected') {
-            // Connexion réussie !
-            try {
-              await supabaseService.createOrUpdateWhatsAppSession({
-                tenant_id: tenantId,
-                user_id: userId,
-                status: 'connected',
-                phone_number: data.phoneNumber,
-                wa_device_id: data.deviceId,
-                qr_code: null
-              });
-            } catch (dbError) {
-              console.warn('⚠️ Sauvegarde DB non disponible (mode démo)');
-            }
+        //   if (data.status === 'connected') {
+        //     // Connexion réussie !
+        //     try {
+        //       await supabaseService.createOrUpdateWhatsAppSession({
+        //         tenant_id: tenantId,
+        //         user_id: userId,
+        //         status: 'connected',
+        //         phone_number: data.phoneNumber,
+        //         wa_device_id: data.deviceId,
+        //         qr_code: null
+        //       });
+        //     } catch (dbError) {
+        //       console.warn('⚠️ Sauvegarde DB non disponible (mode démo)');
+        //     }
             
-            setSession({
-              status: 'connected',
-              phoneNumber: data.phoneNumber,
-              lastConnected: new Date(),
-              qrCode: undefined,
-              error: undefined
-            });
+        //     setSession({
+        //       status: 'connected',
+        //       phoneNumber: data.phoneNumber,
+        //       lastConnected: new Date(),
+        //       qrCode: undefined,
+        //       error: undefined
+        //     });
             
-            return true; // Arrêter le polling
-          }
-        }
+        //     return true; // Arrêter le polling
+        //   }
+        // }
         return false; // Continuer le polling
       } catch (error) {
         console.error('Erreur polling:', error);
@@ -281,32 +314,35 @@ export function useWhatsAppSession() {
     if (!user?.id) return;
     
     try {
-      const currentUser = await supabaseService.getCurrentUser();
-      if (!currentUser) return;
+      // SUPABASE DÉSACTIVÉ - Déconnexion démo
+      console.log('🔄 Mode démo - Déconnexion simulée');
       
-      // Déconnecter côté API si disponible
-      try {
-        const API_URL = 'http://72.60.80.2:3000';
-        await fetch(`${API_URL}/api/session/${currentUser.tenant_id}/disconnect`, {
-          method: 'POST'
-        });
-      } catch (apiError) {
-        console.warn('⚠️ API déconnexion non disponible');
-      }
+      // const currentUser = await supabaseService.getCurrentUser();
+      // if (!currentUser) return;
       
-      // Mettre à jour la DB si disponible
-      try {
-        await supabaseService.createOrUpdateWhatsAppSession({
-          tenant_id: currentUser.tenant_id,
-          user_id: currentUser.id,
-          status: 'disconnected',
-          qr_code: null,
-          phone_number: null,
-          wa_device_id: null
-        });
-      } catch (dbError) {
-        console.warn('⚠️ Sauvegarde DB non disponible (mode démo)');
-      }
+      // // Déconnecter côté API si disponible
+      // try {
+      //   const API_URL = 'http://72.60.80.2:3000';
+      //   await fetch(`${API_URL}/api/session/${currentUser.tenant_id}/disconnect`, {
+      //     method: 'POST'
+      //   });
+      // } catch (apiError) {
+      //   console.warn('⚠️ API déconnexion non disponible');
+      // }
+      
+      // // Mettre à jour la DB si disponible
+      // try {
+      //   await supabaseService.createOrUpdateWhatsAppSession({
+      //     tenant_id: currentUser.tenant_id,
+      //     user_id: currentUser.id,
+      //     status: 'disconnected',
+      //     qr_code: null,
+      //     phone_number: null,
+      //     wa_device_id: null
+      //   });
+      // } catch (dbError) {
+      //   console.warn('⚠️ Sauvegarde DB non disponible (mode démo)');
+      // }
       
       setSession({ status: 'disconnected' });
       
@@ -317,7 +353,10 @@ export function useWhatsAppSession() {
 
   // Charger la session au montage
   useEffect(() => {
-    loadSession();
+    // SUPABASE DÉSACTIVÉ - Pas de chargement session
+    console.log('🔄 Mode démo - Pas de chargement session DB');
+    
+    // loadSession();
   }, [loadSession]);
 
   return {

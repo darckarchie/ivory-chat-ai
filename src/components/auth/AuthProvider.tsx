@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { supabaseService } from '@/lib/services/supabase-service';
+// import { supabase } from '@/lib/supabase';
+// import { supabaseService } from '@/lib/services/supabase-service';
 import { useUserStore } from '@/lib/store';
 
 interface AuthContextType {
@@ -31,35 +31,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setStoreUser = useUserStore(state => state.setUser);
 
   useEffect(() => {
-    // Vérifier la session existante
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        loadUserProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
+    // SUPABASE DÉSACTIVÉ TEMPORAIREMENT
+    console.log('🔄 Mode démo - Supabase désactivé');
+    setLoading(false);
+    
+    // // Vérifier la session existante
+    // supabase.auth.getSession().then(({ data: { session } }) => {
+    //   if (session?.user) {
+    //     loadUserProfile(session.user.id);
+    //   } else {
+    //     setLoading(false);
+    //   }
+    // });
 
-    // Écouter les changements d'auth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          await loadUserProfile(session.user.id);
-        } else {
-          setUser(null);
-          setTenant(null);
-          setStoreUser(null);
-          setLoading(false);
-        }
-      }
-    );
+    // // Écouter les changements d'auth
+    // const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    //   async (event, session) => {
+    //     if (session?.user) {
+    //       await loadUserProfile(session.user.id);
+    //     } else {
+    //       setUser(null);
+    //       setTenant(null);
+    //       setStoreUser(null);
+    //       setLoading(false);
+    //     }
+    //   }
+    // );
 
-    return () => subscription.unsubscribe();
+    // return () => subscription.unsubscribe();
   }, []);
 
   const loadUserProfile = async (userId: string) => {
     try {
-      const profile = await supabaseService.getCurrentUser();
+      // SUPABASE DÉSACTIVÉ - Utiliser profil démo
+      const profile = {
+        id: userId,
+        first_name: 'Utilisateur',
+        last_name: 'Démo',
+        phone: '+22501234567',
+        tenant_id: 'demo-tenant',
+        tenant: {
+          id: 'demo-tenant',
+          name: 'Entreprise Démo',
+          business_sector: 'commerce'
+        }
+      };
+      
+      // const profile = await supabaseService.getCurrentUser();
       
       if (profile) {
         setUser(profile);
@@ -87,17 +105,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (data: SignUpData) => {
     setLoading(true);
     try {
-      const result = await supabaseService.signUp(
-        data.email,
-        data.password,
-        {
-          first_name: data.first_name,
-          last_name: data.last_name,
-          business_name: data.business_name,
-          business_sector: data.business_sector,
-          phone: data.phone
+      // SUPABASE DÉSACTIVÉ - Simulation inscription
+      console.log('🔄 Mode démo - Inscription simulée');
+      
+      const result = {
+        user: {
+          id: `demo-user-${Date.now()}`,
+          email: data.email
         }
-      );
+      };
+      
+      // const result = await supabaseService.signUp(
+      //   data.email,
+      //   data.password,
+      //   {
+      //     first_name: data.first_name,
+      //     last_name: data.last_name,
+      //     business_name: data.business_name,
+      //     business_sector: data.business_sector,
+      //     phone: data.phone
+      //   }
+      // );
       
       // Charger le profil complet
       await loadUserProfile(result.user.id);
@@ -113,7 +141,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { user: authUser } = await supabaseService.signIn(email, password);
+      // SUPABASE DÉSACTIVÉ - Simulation connexion
+      console.log('🔄 Mode démo - Connexion simulée');
+      
+      const authUser = {
+        id: `demo-user-${Date.now()}`,
+        email: email
+      };
+      
+      // const { user: authUser } = await supabaseService.signIn(email, password);
       if (authUser) {
         await loadUserProfile(authUser.id);
       }
@@ -128,7 +164,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setLoading(true);
     try {
-      await supabaseService.signOut();
+      // SUPABASE DÉSACTIVÉ - Simulation déconnexion
+      console.log('🔄 Mode démo - Déconnexion simulée');
+      
+      // await supabaseService.signOut();
     } catch (error) {
       console.error('Erreur déconnexion:', error);
       throw error;

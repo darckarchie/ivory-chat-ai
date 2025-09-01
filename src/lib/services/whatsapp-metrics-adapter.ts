@@ -1,103 +1,108 @@
-const API_URL = 'http://72.60.80.2:3000';
+// API DÉSACTIVÉE TEMPORAIREMENT
+// const API_URL = 'http://72.60.80.2:3000';
 
 export class WhatsAppMetricsAdapter {
   
   async getDashboardMetrics(sessionId = 'test1') {
     try {
-      // Récupérer toutes les données disponibles depuis les endpoints existants
-      const [health, info, status, conversations] = await Promise.all([
-        fetch(`${API_URL}/health`).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${API_URL}/`).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${API_URL}/api/session/${sessionId}/status`).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${API_URL}/api/conversations`).then(r => r.ok ? r.json() : null).catch(() => null)
-      ]);
-
-      // Si l'API n'est pas disponible, utiliser des données de démo
-      if (!health && !info && !status && !conversations) {
-        console.warn('⚠️ API WhatsApp non disponible, utilisation du mode démo');
-        return this.getDemoMetrics(sessionId);
-      }
-
-      // Calculer les métriques depuis les données disponibles
-      const now = new Date();
-      const todayStart = new Date(now.setHours(0,0,0,0));
+      // API DÉSACTIVÉE - Utiliser données démo uniquement
+      console.log('🔄 Mode démo complet - API désactivée');
+      return this.getDemoMetrics(sessionId);
       
-      // Conversations d'aujourd'hui
-      const todayConversations = conversations?.conversations?.filter(c => 
-        new Date(c.startTime) >= todayStart
-      ) || [];
+      // // Récupérer toutes les données disponibles depuis les endpoints existants
+      // const [health, info, status, conversations] = await Promise.all([
+      //   fetch(`${API_URL}/health`).then(r => r.ok ? r.json() : null).catch(() => null),
+      //   fetch(`${API_URL}/`).then(r => r.ok ? r.json() : null).catch(() => null),
+      //   fetch(`${API_URL}/api/session/${sessionId}/status`).then(r => r.ok ? r.json() : null).catch(() => null),
+      //   fetch(`${API_URL}/api/conversations`).then(r => r.ok ? r.json() : null).catch(() => null)
+      // ]);
+
+      // // Si l'API n'est pas disponible, utiliser des données de démo
+      // if (!health && !info && !status && !conversations) {
+      //   console.warn('⚠️ API WhatsApp non disponible, utilisation du mode démo');
+      //   return this.getDemoMetrics(sessionId);
+      // }
+
+      // // Calculer les métriques depuis les données disponibles
+      // const now = new Date();
+      // const todayStart = new Date(now.setHours(0,0,0,0));
       
-      // Messages d'aujourd'hui
-      const messagesToday = todayConversations.reduce((sum, c) => 
-        sum + (c.messageCount || 0), 0
-      );
+      // // Conversations d'aujourd'hui
+      // const todayConversations = conversations?.conversations?.filter(c => 
+      //   new Date(c.startTime) >= todayStart
+      // ) || [];
+      
+      // // Messages d'aujourd'hui
+      // const messagesToday = todayConversations.reduce((sum, c) => 
+      //   sum + (c.messageCount || 0), 0
+      // );
 
-      // Messages en attente
-      const pendingMessages = conversations?.conversations?.filter(c => {
-        const lastMsg = c.lastMessage;
-        if (!lastMsg || lastMsg.type !== 'inbound') return false;
+      // // Messages en attente
+      // const pendingMessages = conversations?.conversations?.filter(c => {
+      //   const lastMsg = c.lastMessage;
+      //   if (!lastMsg || lastMsg.type !== 'inbound') return false;
         
-        const msgTime = new Date(lastMsg.timestamp);
-        const timeDiff = now.getTime() - msgTime.getTime();
-        return timeDiff < 3600000; // Messages de moins d'1h sans réponse
-      }).length || 0;
+      //   const msgTime = new Date(lastMsg.timestamp);
+      //   const timeDiff = now.getTime() - msgTime.getTime();
+      //   return timeDiff < 3600000; // Messages de moins d'1h sans réponse
+      // }).length || 0;
 
-      // Transformer en format métriques dashboard
-      return {
-        whatsapp: {
-          isConnected: status?.status === 'connected' || false,
-          status: status?.status || 'disconnected',
-          phoneNumber: status?.phoneNumber || null,
-          sessionId: status?.sessionId || sessionId,
-          messageCount: status?.messageCount || 0,
-          uptime: status?.uptime || 0,
-          qrCode: status?.qrCode || null
-        },
+      // // Transformer en format métriques dashboard
+      // return {
+      //   whatsapp: {
+      //     isConnected: status?.status === 'connected' || false,
+      //     status: status?.status || 'disconnected',
+      //     phoneNumber: status?.phoneNumber || null,
+      //     sessionId: status?.sessionId || sessionId,
+      //     messageCount: status?.messageCount || 0,
+      //     uptime: status?.uptime || 0,
+      //     qrCode: status?.qrCode || null
+      //   },
         
-        messages: {
-          today: messagesToday,
-          total: info?.stats?.totalMessages || 0,
-          pending: pendingMessages,
-          waiting: pendingMessages, // Alias pour compatibilité
-          replied: Math.max(0, messagesToday - pendingMessages)
-        },
+      //   messages: {
+      //     today: messagesToday,
+      //     total: info?.stats?.totalMessages || 0,
+      //     pending: pendingMessages,
+      //     waiting: pendingMessages, // Alias pour compatibilité
+      //     replied: Math.max(0, messagesToday - pendingMessages)
+      //   },
         
-        conversations: {
-          active: conversations?.conversations?.length || 0,
-          total: info?.stats?.totalConversations || 0,
-          new_today: todayConversations.length,
-          list: conversations?.conversations || []
-        },
+      //   conversations: {
+      //     active: conversations?.conversations?.length || 0,
+      //     total: info?.stats?.totalConversations || 0,
+      //     new_today: todayConversations.length,
+      //     list: conversations?.conversations || []
+      //   },
         
-        ai: {
-          response_time: 2.1,     // Valeur fixe pour l'instant
-          success_rate: 94.5,     // Valeur fixe pour l'instant
-          auto_handled: Math.round(messagesToday * 0.8),
-          human_handoff: Math.round(messagesToday * 0.2),
-          confidence_avg: 0.85
-        },
+      //   ai: {
+      //     response_time: 2.1,     // Valeur fixe pour l'instant
+      //     success_rate: 94.5,     // Valeur fixe pour l'instant
+      //     auto_handled: Math.round(messagesToday * 0.8),
+      //     human_handoff: Math.round(messagesToday * 0.2),
+      //     confidence_avg: 0.85
+      //   },
         
-        customers: {
-          total: info?.stats?.totalConversations || 0,
-          new_today: todayConversations.length,
-          returning: Math.max(0, (info?.stats?.totalConversations || 0) - todayConversations.length)
-        },
+      //   customers: {
+      //     total: info?.stats?.totalConversations || 0,
+      //     new_today: todayConversations.length,
+      //     returning: Math.max(0, (info?.stats?.totalConversations || 0) - todayConversations.length)
+      //   },
         
-        server: {
-          uptime: health?.uptime || 0,
-          status: health?.status || 'unknown',
-          sessions: health?.sessions || 0,
-          server_name: "Whalix VPS Simple"
-        },
+      //   server: {
+      //     uptime: health?.uptime || 0,
+      //     status: health?.status || 'unknown',
+      //     sessions: health?.sessions || 0,
+      //     server_name: "Whalix VPS Simple"
+      //   },
         
-        // Métadonnées
-        meta: {
-          lastUpdated: new Date(),
-          dataSource: 'api',
-          apiUrl: API_URL,
-          sessionId: sessionId
-        }
-      };
+      //   // Métadonnées
+      //   meta: {
+      //     lastUpdated: new Date(),
+      //     dataSource: 'api',
+      //     apiUrl: API_URL,
+      //     sessionId: sessionId
+      //   }
+      // };
     } catch (error) {
       console.error('Erreur récupération métriques API:', error);
       
@@ -188,27 +193,31 @@ export class WhatsAppMetricsAdapter {
   // Récupérer les conversations pour la page Messages
   async getConversationsForMessagesPage() {
     try {
-      console.log('🔍 Tentative récupération conversations depuis API...');
-      const response = await fetch(`${API_URL}/api/conversations`);
+      // API DÉSACTIVÉE - Utiliser conversations démo
+      console.log('🔄 Mode démo - Conversations simulées');
+      return this.getDemoConversations();
       
-      if (!response.ok) {
-        console.warn('⚠️ API conversations non disponible, utilisation mode démo');
-        return this.getDemoConversations();
-      }
+      // console.log('🔍 Tentative récupération conversations depuis API...');
+      // const response = await fetch(`${API_URL}/api/conversations`);
       
-      const data = await response.json();
-      console.log('✅ Conversations récupérées depuis API:', data);
+      // if (!response.ok) {
+      //   console.warn('⚠️ API conversations non disponible, utilisation mode démo');
+      //   return this.getDemoConversations();
+      // }
       
-      // Transformer au format attendu par la page Messages
-      return data?.conversations?.map(conv => ({
-        id: conv.phone,
-        customer: conv.name || 'Client',
-        customer_phone: conv.phone,
-        last_message: conv.lastMessage?.text || '',
-        at: conv.lastMessage?.timestamp || conv.startTime,
-        status: conv.lastMessage?.type === 'inbound' ? 'waiting' : 'ai_replied',
-        message_count: conv.messageCount || 0
-      })) || [];
+      // const data = await response.json();
+      // console.log('✅ Conversations récupérées depuis API:', data);
+      
+      // // Transformer au format attendu par la page Messages
+      // return data?.conversations?.map(conv => ({
+      //   id: conv.phone,
+      //   customer: conv.name || 'Client',
+      //   customer_phone: conv.phone,
+      //   last_message: conv.lastMessage?.text || '',
+      //   at: conv.lastMessage?.timestamp || conv.startTime,
+      //   status: conv.lastMessage?.type === 'inbound' ? 'waiting' : 'ai_replied',
+      //   message_count: conv.messageCount || 0
+      // })) || [];
     } catch (error) {
       console.warn('⚠️ Erreur API conversations, utilisation mode démo:', error);
       return this.getDemoConversations();
@@ -251,27 +260,34 @@ export class WhatsAppMetricsAdapter {
   // Vérifier la santé de l'API
   async checkAPIHealth() {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch(`${API_URL}/health`, {
-        method: 'GET',
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      
-      const data = await response.json();
+      // API DÉSACTIVÉE - Retourner indisponible
+      console.log('🔄 Mode démo - API désactivée');
       return {
-        available: true,
-        status: data.status,
-        uptime: data.uptime,
-        sessions: data.sessions
+        available: false,
+        error: 'API désactivée temporairement'
       };
+      
+      // const controller = new AbortController();
+      // const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      // const response = await fetch(`${API_URL}/health`, {
+      //   method: 'GET',
+      //   signal: controller.signal
+      // });
+      
+      // clearTimeout(timeoutId);
+      
+      // if (!response.ok) {
+      //   throw new Error(`HTTP ${response.status}`);
+      // }
+      
+      // const data = await response.json();
+      // return {
+      //   available: true,
+      //   status: data.status,
+      //   uptime: data.uptime,
+      //   sessions: data.sessions
+      // };
     } catch (error) {
       console.warn('API WhatsApp non disponible:', error);
       return {
