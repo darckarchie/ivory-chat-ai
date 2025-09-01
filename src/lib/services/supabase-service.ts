@@ -50,15 +50,15 @@ class SupabaseService {
         .single();
         
       if (error) {
-        if (error.code === 'PGRST205') {
-          throw new Error('Base de données non configurée. Veuillez contacter le support pour configurer votre projet Supabase.');
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+          throw new Error('❌ Base de données non configurée.\n\n🔧 SOLUTION :\n1. Allez sur supabase.com\n2. Ouvrez votre projet\n3. Cliquez sur "SQL Editor"\n4. Exécutez le fichier "complete_whalix_schema.sql"\n\n📧 Ou contactez le support : support@whalix.ci');
         }
         throw error;
       }
       return tenant;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Could not find the table')) {
-        throw new Error('Base de données non configurée. Veuillez contacter le support pour configurer votre projet Supabase.');
+      if (error instanceof Error && (error.message.includes('Could not find the table') || error.message.includes('PGRST205'))) {
+        throw new Error('❌ Base de données non configurée.\n\n🔧 SOLUTION :\n1. Allez sur supabase.com\n2. Ouvrez votre projet\n3. Cliquez sur "SQL Editor"\n4. Exécutez le fichier "complete_whalix_schema.sql"\n\n📧 Ou contactez le support : support@whalix.ci');
       }
       throw error;
     }
