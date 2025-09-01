@@ -50,6 +50,7 @@ export function useWhatsAppSession() {
     setIsLoading(true);
     
     try {
+      console.log('🔍 Début connexion WhatsApp...');
       const currentUser = await supabaseService.getCurrentUser();
       if (!currentUser) throw new Error('Profil utilisateur non trouvé');
       
@@ -64,6 +65,7 @@ export function useWhatsAppSession() {
             timestamp: new Date().toISOString()
           }
         });
+        console.log('✅ Événement QR loggé');
       } catch (logError) {
         console.warn('⚠️ Logging non disponible (mode démo)');
       }
@@ -77,6 +79,7 @@ export function useWhatsAppSession() {
           status: 'connecting',
           session_path: `/data/sessions/whalix_${currentUser.tenant_id}`
         });
+        console.log('✅ Session DB créée/mise à jour');
       } catch (dbError) {
         console.warn('⚠️ Base de données non disponible (mode démo)');
         dbSession = {
@@ -96,21 +99,49 @@ export function useWhatsAppSession() {
       });
       
       // 3. Appeler l'API existante pour générer le QR
-      const API_URL = 'http://72.60.80.2:3000';
-      const response = await fetch(`${API_URL}/api/session/${currentUser.tenant_id}/status`, {
-        method: 'GET'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API non disponible: ${response.status}`);
-      }
-      
-      const statusData = await response.json();
-      
-      // Si pas de QR, essayer de créer une session
-      if (!statusData.qrCode && statusData.status !== 'connected') {
-        // Simuler la génération d'un QR code pour la démo
-        const demoQR = this.generateDemoQR();
+      try {
+        const API_URL = 'http://72.60.80.2:3000';
+        console.log('🔍 Tentative connexion API WhatsApp...');
+        const response = await fetch(`${API_URL}/api/session/${currentUser.tenant_id}/status`, {
+          method: 'GET'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API non disponible: ${response.status}`);
+        }
+        
+        const statusData = await response.json();
+        console.log('✅ Réponse API reçue:', statusData);
+        
+        // Si pas de QR, essayer de créer une session
+        if (!statusData.qrCode && statusData.status !== 'connected') {
+          throw new Error('QR non disponible depuis API');
+        }
+        
+        // Utiliser les données de l'API
+        setSession({
+          id: dbSession.id,
+          status: statusData.status === 'connected' ? 'connected' : 
+                  statusData.qrCode ? 'qr_pending' : 'connecting',
+          qrCode: statusData.qrCode,
+          phoneNumber: statusData.phoneNumber,
+          error: undefined
+        });
+        
+        if (statusData.status === 'connected') {
+          return; // Déjà connecté
+        }
+        
+        if (statusData.qrCode) {
+          // Commencer le polling pour vérifier le scan
+          startStatusPolling(currentUser.tenant_id, currentUser.id);
+        }
+        
+      } catch (apiError) {
+        console.warn('⚠️ API non disponible, utilisation mode démo:', apiError);
+        
+        // Mode démo complet
+        const demoQR = generateDemoQR();
         
         setSession({
           id: dbSession.id,
@@ -131,34 +162,13 @@ export function useWhatsAppSession() {
             error: undefined
           });
         }, 10000);
-        
-        return;
-      }
-      
-      // Utiliser les données de l'API
-      setSession({
-        id: dbSession.id,
-        status: statusData.status === 'connected' ? 'connected' : 
-                statusData.qrCode ? 'qr_pending' : 'connecting',
-        qrCode: statusData.qrCode,
-        phoneNumber: statusData.phoneNumber,
-        error: undefined
-      });
-      
-      if (statusData.status === 'connected') {
-        return; // Déjà connecté
-      }
-      
-      if (statusData.qrCode) {
-        // Commencer le polling pour vérifier le scan
-        startStatusPolling(currentUser.tenant_id, currentUser.id);
       }
       
     } catch (error) {
-      console.error('Erreur connexion WhatsApp:', error);
+      console.warn('⚠️ Erreur connexion, passage en mode démo:', error);
       
       // Mode démo en cas d'erreur
-      const demoQR = this.generateDemoQR();
+      const demoQR = generateDemoQR();
       
       setSession({
         status: 'qr_pending',
@@ -182,7 +192,7 @@ export function useWhatsAppSession() {
   }, [user?.id]);
 
   // Générer un QR code de démo
-  const generateDemoQR = () => {
+  const generateDemoQR = useCallback(() => {
     const demoData = `whalix-demo-${Date.now()}`;
     return `data:image/svg+xml;base64,${btoa(`
       <svg width="256" height="256" xmlns="http://www.w3.org/2000/svg">
@@ -199,7 +209,7 @@ export function useWhatsAppSession() {
         </text>
       </svg>
     `)}`;
-  };
+  }, []);
 
   // Polling pour vérifier le statut (adapté à votre API)
   const startStatusPolling = useCallback((tenantId: string, userId: string) => {

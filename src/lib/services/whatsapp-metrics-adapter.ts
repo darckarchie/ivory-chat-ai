@@ -188,14 +188,16 @@ export class WhatsAppMetricsAdapter {
   // Récupérer les conversations pour la page Messages
   async getConversationsForMessagesPage() {
     try {
+      console.log('🔍 Tentative récupération conversations depuis API...');
       const response = await fetch(`${API_URL}/api/conversations`);
       
       if (!response.ok) {
-        console.warn('⚠️ API conversations non disponible');
-        return [];
+        console.warn('⚠️ API conversations non disponible, utilisation mode démo');
+        return this.getDemoConversations();
       }
       
       const data = await response.json();
+      console.log('✅ Conversations récupérées depuis API:', data);
       
       // Transformer au format attendu par la page Messages
       return data?.conversations?.map(conv => ({
@@ -208,9 +210,42 @@ export class WhatsAppMetricsAdapter {
         message_count: conv.messageCount || 0
       })) || [];
     } catch (error) {
-      console.error('Erreur récupération conversations:', error);
-      return [];
+      console.warn('⚠️ Erreur API conversations, utilisation mode démo:', error);
+      return this.getDemoConversations();
     }
+  }
+
+  // Conversations de démo
+  private getDemoConversations() {
+    return [
+      {
+        id: '2250789123456',
+        customer: 'Marie Kouassi',
+        customer_phone: '2250789123456',
+        last_message: 'Bonjour, je voudrais commander',
+        at: new Date(Date.now() - 300000).toISOString(), // 5 min ago
+        status: 'waiting',
+        message_count: 3
+      },
+      {
+        id: '2250712345678',
+        customer: 'Jean Baptiste',
+        customer_phone: '2250712345678',
+        last_message: 'Merci pour votre réponse rapide !',
+        at: new Date(Date.now() - 900000).toISOString(), // 15 min ago
+        status: 'ai_replied',
+        message_count: 7
+      },
+      {
+        id: '2250798765432',
+        customer: 'Fatou Diallo',
+        customer_phone: '2250798765432',
+        last_message: 'Quels sont vos horaires ?',
+        at: new Date(Date.now() - 1800000).toISOString(), // 30 min ago
+        status: 'waiting',
+        message_count: 2
+      }
+    ];
   }
 
   // Vérifier la santé de l'API

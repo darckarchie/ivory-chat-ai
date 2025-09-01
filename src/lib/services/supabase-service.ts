@@ -205,7 +205,7 @@ class SupabaseService {
         .single();
         
       if (error) {
-        if (error.code === 'PGRST205') {
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
           console.warn('🔄 Mode démo - Table whatsapp_sessions non configurée');
           return {
             id: '00000000-0000-0000-0000-000000000003',
@@ -227,7 +227,7 @@ class SupabaseService {
       }
       return session;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Could not find the table')) {
+      if (error instanceof Error && (error.message.includes('Could not find the table') || error.message.includes('PGRST205'))) {
         console.warn('🔄 Mode démo - Table whatsapp_sessions non configurée');
         return {
           id: '00000000-0000-0000-0000-000000000003',
@@ -258,7 +258,7 @@ class SupabaseService {
         .single();
         
       if (error) {
-        if (error.code === 'PGRST205') {
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
           console.warn('🔄 Mode démo - Table whatsapp_sessions non configurée');
           return null;
         }
@@ -266,7 +266,7 @@ class SupabaseService {
       }
       return data;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Could not find the table')) {
+      if (error instanceof Error && (error.message.includes('Could not find the table') || error.message.includes('PGRST205'))) {
         console.warn('🔄 Mode démo - Table whatsapp_sessions non configurée');
         return null;
       }
@@ -319,7 +319,7 @@ class SupabaseService {
         .single();
         
       if (error) {
-        if (error.code === 'PGRST205') {
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
           console.warn('🔄 Mode démo - Table events non configurée');
           return {
             id: `event_${Date.now()}`,
@@ -335,7 +335,7 @@ class SupabaseService {
       }
       return event;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Could not find the table')) {
+      if (error instanceof Error && (error.message.includes('Could not find the table') || error.message.includes('PGRST205'))) {
         console.warn('🔄 Mode démo - Table events non configurée');
         return {
           id: `event_${Date.now()}`,

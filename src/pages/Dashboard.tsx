@@ -115,10 +115,24 @@ const Dashboard = () => {
         ...itemData,
         created_at: now,
         updated_at: now
+      console.log('🔍 Chargement conversations dashboard...');
       };
+      console.log('✅ Conversations chargées:', conversations);
       const updatedItems = [...kbItems, newItem];
       setKbItems(updatedItems);
-      localStorage.setItem('whalix_kb_items', JSON.stringify(updatedItems));
+      console.warn('⚠️ Erreur récupération conversations (ignorée):', error);
+      // Utiliser des conversations de démo en cas d'erreur
+      setConversations([
+        {
+          id: 'demo1',
+          customer: 'Client Démo',
+          customer_phone: '2250789123456',
+          last_message: 'Message de démonstration',
+          at: new Date().toISOString(),
+          status: 'waiting',
+          message_count: 1
+        }
+      ]);
     }
   };
   
