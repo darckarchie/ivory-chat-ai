@@ -82,11 +82,21 @@ const Register = () => {
       
     } catch (error) {
       console.error('Erreur inscription:', error);
-      toast({
-        title: "❌ Erreur lors de l'inscription",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
-        variant: "destructive"
-      });
+      
+      // Gestion spécifique du rate limit Supabase
+      if (error instanceof Error && error.message.includes('over_email_send_rate_limit')) {
+        toast({
+          title: "⏱️ Trop de tentatives",
+          description: "Veuillez patienter 30 secondes avant de réessayer l'inscription.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "❌ Erreur lors de l'inscription",
+          description: error instanceof Error ? error.message : "Une erreur est survenue",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
