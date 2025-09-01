@@ -214,12 +214,34 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
       );
     }
 
+    // Fonction utilitaire pour valider le QR code
+    const isValidQRCode = (qrCode: string | null | undefined): boolean => {
+      if (!qrCode || typeof qrCode !== 'string') return false;
+      
+      // Vérifier si c'est une data URI valide
+      if (qrCode.startsWith('data:image/')) {
+        return qrCode.includes('base64,') && qrCode.split('base64,')[1]?.length > 0;
+      }
+      
+      // Vérifier si c'est une URL HTTP valide
+      if (qrCode.startsWith('http')) {
+        try {
+          new URL(qrCode);
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      
+      return false;
+    };
     if (session?.status === 'qr_pending' && session?.qrCode) {
       console.log('📱 [DEBUG] Affichage QR - Status:', session.status);
       console.log('📱 [DEBUG] QR Code value:', session.qrCode);
       console.log('📱 [DEBUG] QR Code type:', typeof session.qrCode);
       console.log('📱 [DEBUG] QR Code starts with data:', session.qrCode.startsWith('data:'));
       console.log('📱 [DEBUG] QR Code starts with http:', session.qrCode.startsWith('http'));
+      console.log('📱 [DEBUG] QR Code is valid:', isValidQRCode(session.qrCode));
       
       return (
         <div className="text-center py-8">
@@ -238,33 +260,30 @@ export function WhatsAppConnectionCard({ restaurantId, onStatusChange }: WhatsAp
               whileHover={{ scale: 1.02 }}
               className="bg-white p-4 rounded-2xl border-2 border-primary/30 mb-6 inline-block shadow-glow"
             >
-              {session.qrCode ? (
-                session.qrCode.startsWith('http') || session.qrCode.startsWith('data:') ? (
+              {session.qrCode && isValidQRCode(session.qrCode) ? (
                   <div>
                     <img 
                       src={session.qrCode}
                       alt="QR Code WhatsApp" 
                       className="w-48 h-48 object-contain mx-auto"
                       onLoad={() => console.log('✅ [DEBUG] Image QR chargée avec succès')}
-                      onError={(e) => console.error('❌ [DEBUG] Erreur chargement image QR:', e)}
+                      onError={(e) => {
+                        console.error('❌ [DEBUG] Erreur chargement image QR:', e);
+                        addDebugLog(`❌ QR invalide: ${session.qrCode?.substring(0, 50)}...`);
+                      }}
                     />
                     <p className="text-xs text-muted-foreground mt-2">QR Code généré</p>
                   </div>
-                ) : (
-                  <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
-                    <div className="text-center">
-                      <QrCode className="h-16 w-16 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">Mode Test</p>
-                      <p className="text-xs text-gray-400 mt-2 break-all">QR: {session.qrCode.substring(0, 50)}...</p>
-                      <p className="text-xs text-gray-400">Type: {typeof session.qrCode}</p>
-                    </div>
-                  </div>
-                )
               ) : (
                 <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
                   <div className="text-center">
-                    <Loader2 className="h-16 w-16 text-gray-400 mx-auto mb-2 animate-spin" />
-                    <p className="text-sm text-gray-500">Génération QR...</p>
+                    <QrCode className="h-16 w-16 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">QR Code indisponible</p>
+                    {session.qrCode && (
+                      <p className="text-xs text-gray-400 mt-2 break-all">
+                        Données: {session.qrCode.substring(0, 30)}...
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
