@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-// import { supabaseService } from '@/lib/services/supabase-service';
+import { simpleAPI } from '@/lib/services/simple-api-demo';
 import { useUserStore } from '@/lib/store';
 
 export interface WhatsAppSessionState {
@@ -52,234 +52,74 @@ export function useWhatsAppSession() {
     if (!user?.id) throw new Error('Utilisateur non connecté');
     
     setIsLoading(true);
+    setSession({ status: 'connecting' });
     
     try {
-      console.log('🔍 Début connexion WhatsApp...');
+      console.log('🔗 Début connexion WhatsApp via API...');
       
-      // SUPABASE DÉSACTIVÉ - Utiliser données démo
-      const currentUser = {
-        id: user.id,
-        tenant_id: 'demo-tenant',
-        first_name: user.firstName,
-        last_name: user.lastName
-      };
-      
-      // const currentUser = await supabaseService.getCurrentUser();
-      // if (!currentUser) throw new Error('Profil utilisateur non trouvé');
-      
-      // 1. Logger l'événement QR généré (mode démo si table manquante)
-      try {
-        // SUPABASE DÉSACTIVÉ - Log en console uniquement
-        console.log('📊 Événement QR généré (mode démo)');
-        
-        // await supabaseService.logEvent({
-        //   tenant_id: currentUser.tenant_id,
-        //   user_id: currentUser.id,
-        //   type: 'qr_generated',
-        //   payload: { 
-        //     session_name: `whalix_${currentUser.tenant_id}`,
-        //     timestamp: new Date().toISOString()
-        //   }
-        // });
-        console.log('✅ Événement QR loggé');
-      } catch (logError) {
-        console.warn('⚠️ Logging non disponible (mode démo)');
+      // 1. Vérifier que l'API est disponible
+      const health = await simpleAPI.checkHealth();
+      if (!health.available) {
+        throw new Error(`API non disponible: ${health.error}`);
       }
       
-      // 2. Créer/mettre à jour la session en DB (mode démo si table manquante)
-      let dbSession;
-      try {
-        // SUPABASE DÉSACTIVÉ - Session démo
-        dbSession = {
-          id: 'demo-session',
-          tenant_id: currentUser.tenant_id,
-          user_id: currentUser.id,
-          status: 'connecting'
-        };
-        
-        // dbSession = await supabaseService.createOrUpdateWhatsAppSession({
-        //   tenant_id: currentUser.tenant_id,
-        //   user_id: currentUser.id,
-        //   status: 'connecting',
-        //   session_path: `/data/sessions/whalix_${currentUser.tenant_id}`
-        // });
-        console.log('✅ Session DB créée/mise à jour');
-      } catch (dbError) {
-        console.warn('⚠️ Base de données non disponible (mode démo)');
-        dbSession = {
-          id: 'demo-session',
-          tenant_id: currentUser.tenant_id,
-          user_id: currentUser.id,
-          status: 'connecting'
-        };
+      console.log('✅ API disponible, création session...');
+      
+      // 2. Créer la session via l'API
+      const sessionResult = await simpleAPI.createSession(user.id);
+      
+      if (!sessionResult.success) {
+        throw new Error(sessionResult.error || 'Erreur création session');
       }
       
+      console.log('📱 QR Code reçu de l\'API');
+      
+      // 3. Mettre à jour l'état avec le QR code de l'API
       setSession({
-        id: dbSession.id,
-        status: 'connecting',
-        phoneNumber: undefined,
-        qrCode: undefined,
+        status: sessionResult.status === 'qr_generated' ? 'qr_pending' : 'connecting',
+        qrCode: sessionResult.qrCode,
         error: undefined
       });
       
-      // 3. Appeler l'API existante pour générer le QR
-      try {
-        const API_URL = 'http://72.60.80.2:3000';
-        console.log('🔍 API WhatsApp désactivée - Mode démo complet');
-        
-        // Mode démo complet - pas d'appel API
-        throw new Error('Mode démo - API désactivée');
-        
-        // console.log('🔍 Tentative connexion API WhatsApp...');
-        // const response = await fetch(`${API_URL}/api/session/${currentUser.tenant_id}/status`, {
-        //   method: 'GET'
-        // });
-        
-        // if (!response.ok) {
-        //   throw new Error(`API non disponible: ${response.status}`);
-        // }
-        
-        // const statusData = await response.json();
-        // console.log('✅ Réponse API reçue:', statusData);
-        
-        // // Si pas de QR, essayer de créer une session
-        // if (!statusData.qrCode && statusData.status !== 'connected') {
-        //   throw new Error('QR non disponible depuis API');
-        // }
-        
-        // // Utiliser les données de l'API
-        // setSession({
-        //   id: dbSession.id,
-        //   status: statusData.status === 'connected' ? 'connected' : 
-        //           statusData.qrCode ? 'qr_pending' : 'connecting',
-        //   qrCode: statusData.qrCode,
-        //   phoneNumber: statusData.phoneNumber,
-        //   error: undefined
-        // });
-        
-        // if (statusData.status === 'connected') {
-        //   return; // Déjà connecté
-        // }
-        
-        // if (statusData.qrCode) {
-        //   // Commencer le polling pour vérifier le scan
-        //   startStatusPolling(currentUser.tenant_id, currentUser.id);
-        // }
-        
-      } catch (apiError) {
-        console.warn('⚠️ API non disponible, utilisation mode démo:', apiError);
-        
-        // Mode démo complet
-        const demoQR = generateDemoQR();
-        
-        setSession({
-          id: dbSession.id,
-          status: 'qr_pending',
-          qrCode: demoQR,
-          phoneNumber: undefined,
-          error: undefined
-        });
-        
-        // Simuler la connexion après 10 secondes
-        setTimeout(() => {
-          setSession({
-            id: dbSession.id,
-            status: 'connected',
-            phoneNumber: '+225 07 00 00 00 01',
-            lastConnected: new Date(),
-            qrCode: undefined,
-            error: undefined
-          });
-        }, 10000);
+      // 4. Démarrer le polling pour vérifier la connexion
+      if (sessionResult.qrCode) {
+        startStatusPolling(user.id);
       }
       
     } catch (error) {
-      console.warn('⚠️ Erreur connexion, passage en mode démo:', error);
-      
-      // Mode démo en cas d'erreur
-      const demoQR = generateDemoQR();
+      console.error('❌ Erreur connexion API:', error);
       
       setSession({
-        status: 'qr_pending',
-        qrCode: demoQR,
-        error: undefined
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Erreur de connexion'
       });
-      
-      // Simuler la connexion après 10 secondes
-      setTimeout(() => {
-        setSession({
-          status: 'connected',
-          phoneNumber: '+225 07 00 00 00 01',
-          lastConnected: new Date(),
-          qrCode: undefined,
-          error: undefined
-        });
-      }, 10000);
     } finally {
       setIsLoading(false);
     }
   }, [user?.id]);
 
-  // Générer un QR code de démo
-  const generateDemoQR = useCallback(() => {
-    const demoData = `whalix-demo-${Date.now()}`;
-    return `data:image/svg+xml;base64,${btoa(`
-      <svg width="256" height="256" xmlns="http://www.w3.org/2000/svg">
-        <rect width="256" height="256" fill="white" stroke="#e5e7eb" stroke-width="2"/>
-        <rect x="20" y="20" width="216" height="216" fill="none" stroke="#374151" stroke-width="2"/>
-        <text x="128" y="120" text-anchor="middle" font-family="Arial" font-size="16" fill="#374151">
-          QR Code Démo
-        </text>
-        <text x="128" y="140" text-anchor="middle" font-family="Arial" font-size="12" fill="#6b7280">
-          Scannez pour connecter
-        </text>
-        <text x="128" y="160" text-anchor="middle" font-family="Arial" font-size="10" fill="#9ca3af">
-          Mode démo - Connexion auto
-        </text>
-      </svg>
-    `)}`;
-  }, []);
-
-  // Polling pour vérifier le statut (adapté à votre API)
-  const startStatusPolling = useCallback((tenantId: string, userId: string) => {
+  // Polling pour vérifier le statut via l'API
+  const startStatusPolling = useCallback((sessionId: string) => {
     const checkStatus = async () => {
       try {
-        // API DÉSACTIVÉE - Simulation démo
-        console.log('🔄 Polling désactivé - Mode démo');
-        return false;
+        const statusResult = await simpleAPI.getSessionStatus(sessionId);
         
-        // const API_URL = 'http://72.60.80.2:3000';
-        // const response = await fetch(`${API_URL}/api/session/${tenantId}/status`);
+        if (statusResult.success) {
+          if (statusResult.status === 'connected') {
+            console.log('✅ WhatsApp connecté via API!');
+            
+            setSession({
+              status: 'connected',
+              phoneNumber: statusResult.phoneNumber,
+              lastConnected: new Date(),
+              qrCode: undefined,
+              error: undefined
+            });
+            
+            return true; // Arrêter le polling
+          }
+        }
         
-        // if (response.ok) {
-        //   const data = await response.json();
-          
-        //   if (data.status === 'connected') {
-        //     // Connexion réussie !
-        //     try {
-        //       await supabaseService.createOrUpdateWhatsAppSession({
-        //         tenant_id: tenantId,
-        //         user_id: userId,
-        //         status: 'connected',
-        //         phone_number: data.phoneNumber,
-        //         wa_device_id: data.deviceId,
-        //         qr_code: null
-        //       });
-        //     } catch (dbError) {
-        //       console.warn('⚠️ Sauvegarde DB non disponible (mode démo)');
-        //     }
-            
-        //     setSession({
-        //       status: 'connected',
-        //       phoneNumber: data.phoneNumber,
-        //       lastConnected: new Date(),
-        //       qrCode: undefined,
-        //       error: undefined
-        //     });
-            
-        //     return true; // Arrêter le polling
-        //   }
-        // }
         return false; // Continuer le polling
       } catch (error) {
         console.error('Erreur polling:', error);
@@ -314,57 +154,56 @@ export function useWhatsAppSession() {
     if (!user?.id) return;
     
     try {
-      // SUPABASE DÉSACTIVÉ - Déconnexion démo
-      console.log('🔄 Mode démo - Déconnexion simulée');
+      console.log('🔴 Déconnexion via API...');
       
-      // const currentUser = await supabaseService.getCurrentUser();
-      // if (!currentUser) return;
+      const result = await simpleAPI.disconnectSession(user.id);
       
-      // // Déconnecter côté API si disponible
-      // try {
-      //   const API_URL = 'http://72.60.80.2:3000';
-      //   await fetch(`${API_URL}/api/session/${currentUser.tenant_id}/disconnect`, {
-      //     method: 'POST'
-      //   });
-      // } catch (apiError) {
-      //   console.warn('⚠️ API déconnexion non disponible');
-      // }
-      
-      // // Mettre à jour la DB si disponible
-      // try {
-      //   await supabaseService.createOrUpdateWhatsAppSession({
-      //     tenant_id: currentUser.tenant_id,
-      //     user_id: currentUser.id,
-      //     status: 'disconnected',
-      //     qr_code: null,
-      //     phone_number: null,
-      //     wa_device_id: null
-      //   });
-      // } catch (dbError) {
-      //   console.warn('⚠️ Sauvegarde DB non disponible (mode démo)');
-      // }
-      
-      setSession({ status: 'disconnected' });
+      if (result.success) {
+        console.log('✅ Déconnexion réussie');
+        setSession({ status: 'disconnected' });
+      } else {
+        throw new Error(result.error || 'Erreur déconnexion');
+      }
       
     } catch (error) {
       console.error('Erreur déconnexion:', error);
+      setSession({ 
+        status: 'error', 
+        error: error instanceof Error ? error.message : 'Erreur déconnexion' 
+      });
     }
   }, [user?.id]);
 
   // Charger la session au montage
   useEffect(() => {
-    // SUPABASE DÉSACTIVÉ - Pas de chargement session
-    console.log('🔄 Mode démo - Pas de chargement session DB');
+    const checkInitialStatus = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const statusResult = await simpleAPI.getSessionStatus(user.id);
+        
+        if (statusResult.success) {
+          setSession({
+            status: statusResult.status as any,
+            phoneNumber: statusResult.phoneNumber,
+            qrCode: statusResult.qrCode,
+            error: undefined
+          });
+        }
+      } catch (error) {
+        console.warn('⚠️ Impossible de vérifier le statut initial');
+      }
+    };
     
-    // loadSession();
-  }, [loadSession]);
+    checkInitialStatus();
+  }, [user?.id]);
 
   return {
     session,
     isLoading,
     connect,
     disconnect,
-    reload: loadSession,
+    reload: () => {}, // Pas de reload nécessaire
     isConnected: session.status === 'connected',
     hasQR: session.status === 'qr_pending' && !!session.qrCode
   };
