@@ -365,14 +365,47 @@ class SupabaseService {
   
   async getTenantMetrics(tenantId: string, date?: string) {
     try {
-    const { data, error } = await supabase
-      .rpc('get_tenant_metrics', {
-        p_tenant_id: tenantId,
-        p_date: date || new Date().toISOString().split('T')[0]
-      });
-      
-    if (error) throw error;
-    return data;
+      const { data, error } = await supabase
+        .rpc('get_tenant_metrics', {
+          p_tenant_id: tenantId,
+          p_date: date || new Date().toISOString().split('T')[0]
+        });
+        
+      if (error) {
+        if (error.code === 'PGRST205' || error.code === '42883') {
+          console.warn('🔄 Mode démo - Fonction métriques non configurée');
+          return {
+            total_conversations: 12,
+            total_messages: 156,
+            ai_responses: 89,
+            response_rate: 0.85,
+            avg_response_time: 2.3,
+            active_sessions: 3,
+            daily_stats: [
+              { date: new Date().toISOString().split('T')[0], conversations: 12, messages: 156 }
+            ]
+          };
+        }
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      if (error instanceof Error && (error.message.includes('invalid input syntax for type uuid') || error.message.includes('Could not find'))) {
+        console.warn('🔄 Mode démo - Métriques simulées');
+        return {
+          total_conversations: 12,
+          total_messages: 156,
+          ai_responses: 89,
+          response_rate: 0.85,
+          avg_response_time: 2.3,
+          active_sessions: 3,
+          daily_stats: [
+            { date: new Date().toISOString().split('T')[0], conversations: 12, messages: 156 }
+          ]
+        };
+      }
+      throw error;
+    }
   }
   
   async getEventsByType(tenantId: string, eventType: Event['type'], limit = 100) {
@@ -463,41 +496,8 @@ class SupabaseService {
           payload: { login_method: 'email' }
         });
       }
-      if (error) {
-        if (error.code === 'PGRST205' || error.code === '42883') {
-          console.warn('🔄 Mode démo - Fonction métriques non configurée');
-          return {
-            total_conversations: 12,
-            total_messages: 156,
-            ai_responses: 89,
-            response_rate: 0.85,
-            avg_response_time: 2.3,
-            active_sessions: 3,
-            daily_stats: [
-              { date: new Date().toISOString().split('T')[0], conversations: 12, messages: 156 }
-            ]
-          };
-        }
-        throw error;
-      }
-    
-    } catch (error) {
-      if (error instanceof Error && (error.message.includes('invalid input syntax for type uuid') || error.message.includes('Could not find'))) {
-        console.warn('🔄 Mode démo - Métriques simulées');
-        return {
-          total_conversations: 12,
-          total_messages: 156,
-          ai_responses: 89,
-          response_rate: 0.85,
-          avg_response_time: 2.3,
-          active_sessions: 3,
-          daily_stats: [
-            { date: new Date().toISOString().split('T')[0], conversations: 12, messages: 156 }
-          ]
-        };
-      }
-      throw error;
     }
+    
     return data;
   }
   
