@@ -184,38 +184,94 @@ class SupabaseService {
     phone_number?: string;
     last_error?: string;
   }) {
-    const { data: session, error } = await supabase
-      .from('whatsapp_sessions')
-      .upsert({
-        tenant_id: data.tenant_id,
-        user_id: data.user_id,
-        status: data.status,
-        qr_code: data.qr_code,
-        session_path: data.session_path,
-        wa_device_id: data.wa_device_id,
-        phone_number: data.phone_number,
-        last_error: data.last_error,
-        updated_at: new Date().toISOString(),
-        last_seen_at: new Date().toISOString()
-      }, {
-        onConflict: 'tenant_id'
-      })
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return session;
+    try {
+      const { data: session, error } = await supabase
+        .from('whatsapp_sessions')
+        .upsert({
+          tenant_id: data.tenant_id,
+          user_id: data.user_id,
+          status: data.status,
+          qr_code: data.qr_code,
+          session_path: data.session_path,
+          wa_device_id: data.wa_device_id,
+          phone_number: data.phone_number,
+          last_error: data.last_error,
+          updated_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString()
+        }, {
+          onConflict: 'tenant_id'
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        if (error.code === 'PGRST205') {
+          console.warn('🔄 Mode démo - Table whatsapp_sessions non configurée');
+          return {
+            id: '00000000-0000-0000-0000-000000000003',
+            tenant_id: data.tenant_id,
+            user_id: data.user_id,
+            status: data.status,
+            qr_code: data.qr_code,
+            session_path: data.session_path,
+            wa_device_id: data.wa_device_id,
+            phone_number: data.phone_number,
+            last_error: data.last_error,
+            message_count: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            last_seen_at: new Date().toISOString()
+          };
+        }
+        throw error;
+      }
+      return session;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Could not find the table')) {
+        console.warn('🔄 Mode démo - Table whatsapp_sessions non configurée');
+        return {
+          id: '00000000-0000-0000-0000-000000000003',
+          tenant_id: data.tenant_id,
+          user_id: data.user_id,
+          status: data.status,
+          qr_code: data.qr_code,
+          session_path: data.session_path,
+          wa_device_id: data.wa_device_id,
+          phone_number: data.phone_number,
+          last_error: data.last_error,
+          message_count: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString()
+        };
+      }
+      throw error;
+    }
   }
   
   async getWhatsAppSession(tenantId: string) {
-    const { data, error } = await supabase
-      .from('whatsapp_sessions')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .single();
-      
-    if (error && error.code !== 'PGRST116') throw error; // Ignore "not found"
-    return data;
+    try {
+      const { data, error } = await supabase
+        .from('whatsapp_sessions')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .single();
+        
+      if (error) {
+        if (error.code === 'PGRST205') {
+          console.warn('🔄 Mode démo - Table whatsapp_sessions non configurée');
+          return null;
+        }
+        if (error.code !== 'PGRST116') throw error; // Ignore "not found"
+      }
+      return data;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Could not find the table')) {
+        console.warn('🔄 Mode démo - Table whatsapp_sessions non configurée');
+        return null;
+      }
+      throw error;
+    }
   }
   
   async updateSessionStatus(tenantId: string, status: WhatsAppSession['status'], extra?: {
@@ -249,20 +305,50 @@ class SupabaseService {
     type: Event['type'];
     payload?: any;
   }) {
-    const { data: event, error } = await supabase
-      .from('events')
-      .insert({
-        tenant_id: data.tenant_id,
-        user_id: data.user_id,
-        conversation_id: data.conversation_id,
-        type: data.type,
-        payload: data.payload || {}
-      })
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return event;
+    try {
+      const { data: event, error } = await supabase
+        .from('events')
+        .insert({
+          tenant_id: data.tenant_id,
+          user_id: data.user_id,
+          conversation_id: data.conversation_id,
+          type: data.type,
+          payload: data.payload || {}
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        if (error.code === 'PGRST205') {
+          console.warn('🔄 Mode démo - Table events non configurée');
+          return {
+            id: `event_${Date.now()}`,
+            tenant_id: data.tenant_id,
+            user_id: data.user_id,
+            conversation_id: data.conversation_id,
+            type: data.type,
+            payload: data.payload || {},
+            created_at: new Date().toISOString()
+          };
+        }
+        throw error;
+      }
+      return event;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Could not find the table')) {
+        console.warn('🔄 Mode démo - Table events non configurée');
+        return {
+          id: `event_${Date.now()}`,
+          tenant_id: data.tenant_id,
+          user_id: data.user_id,
+          conversation_id: data.conversation_id,
+          type: data.type,
+          payload: data.payload || {},
+          created_at: new Date().toISOString()
+        };
+      }
+      throw error;
+    }
   }
 
   // === CONVERSATIONS ===

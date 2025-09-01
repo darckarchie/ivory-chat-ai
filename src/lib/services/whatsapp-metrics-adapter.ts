@@ -1,4 +1,4 @@
-const API_URL = 'http://72.60.80.2:3000';
+const API_URL = import.meta.env.VITE_WHATSAPP_API_URL || 'http://localhost:3001';
 
 export class WhatsAppMetricsAdapter {
   

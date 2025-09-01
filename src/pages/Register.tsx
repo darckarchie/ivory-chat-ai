@@ -86,10 +86,10 @@ const Register = () => {
       // Gestion spécifique du rate limit Supabase
       if (error instanceof Error && error.message.includes('over_email_send_rate_limit')) {
         toast({
-          title: "⏱️ Trop de tentatives",
-          description: "Veuillez patienter 30 secondes avant de réessayer l'inscription.",
-          variant: "destructive"
+          title: "🔄 Mode démo activé",
+          description: "Limite Supabase atteinte. L'application fonctionne en mode démo.",
         });
+        navigate(`/dashboard?secteur=${selectedSector}&demo=true`);
       } else if (error instanceof Error && error.message.includes('Base de données non configurée')) {
         toast({
           title: "🔄 Mode démo activé",

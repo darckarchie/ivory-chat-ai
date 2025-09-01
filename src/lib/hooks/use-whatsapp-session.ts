@@ -81,7 +81,7 @@ export function useWhatsAppSession() {
       });
       
       // 3. Appeler l'API backend pour générer le QR
-      const BACKEND_URL = 'https://whalix-server-railway-production.up.railway.app';
+      const BACKEND_URL = import.meta.env.VITE_WHATSAPP_API_URL || 'http://localhost:3001';
       const response = await fetch(`${BACKEND_URL}/api/session/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -144,7 +144,7 @@ export function useWhatsAppSession() {
   const startStatusPolling = useCallback((tenantId: string, userId: string) => {
     const checkStatus = async () => {
       try {
-        const BACKEND_URL = 'https://whalix-server-railway-production.up.railway.app';
+        const BACKEND_URL = import.meta.env.VITE_WHATSAPP_API_URL || 'http://localhost:3001';
         const response = await fetch(`${BACKEND_URL}/api/whatsapp/status/${tenantId}`);
         
         if (response.ok) {
@@ -241,7 +241,7 @@ export function useWhatsAppSession() {
       if (!currentUser) return;
       
       // Déconnecter côté serveur
-      const BACKEND_URL = 'https://whalix-server-railway-production.up.railway.app';
+      const BACKEND_URL = import.meta.env.VITE_WHATSAPP_API_URL || 'http://localhost:3001';
       await fetch(`${BACKEND_URL}/api/whatsapp/disconnect/${currentUser.tenant_id}`, {
         method: 'POST'
       });
