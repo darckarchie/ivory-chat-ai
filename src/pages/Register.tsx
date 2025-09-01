@@ -75,18 +75,40 @@ const Register = () => {
       
       toast({
         title: "✅ Compte créé avec succès !",
-        description: "Bienvenue dans Whalix. Votre dashboard est prêt.",
+        description: "Bienvenue dans Whalix. Mode démo activé en attendant la configuration de la base de données.",
       });
       
       navigate(`/dashboard?secteur=${selectedSector}`);
       
     } catch (error) {
       console.error('Erreur inscription:', error);
-      toast({
-        title: "❌ Erreur lors de l'inscription",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
-        variant: "destructive"
-      });
+      
+      // Gestion spécifique du rate limit Supabase
+      if (error instanceof Error && error.message.includes('over_email_send_rate_limit')) {
+        toast({
+          title: "🔄 Mode démo activé",
+          description: "Limite Supabase atteinte. L'application fonctionne en mode démo.",
+        });
+        navigate(`/dashboard?secteur=${selectedSector}&demo=true`);
+      } else if (error instanceof Error && error.message.includes('Base de données non configurée')) {
+        toast({
+          title: "🔄 Mode démo activé",
+          description: "L'application fonctionne en mode démo. Configurez Supabase pour activer toutes les fonctionnalités.",
+        });
+        navigate(`/dashboard?secteur=${selectedSector}&demo=true`);
+      } else if (error instanceof Error && error.message.includes('over_email_send_rate_limit')) {
+        toast({
+          title: "🔄 Mode démo activé",
+          description: "Limite Supabase atteinte. L'application fonctionne en mode démo.",
+        });
+        navigate(`/dashboard?secteur=${selectedSector}&demo=true`);
+      } else {
+        toast({
+          title: "❌ Erreur lors de l'inscription",
+          description: error instanceof Error ? error.message : "Une erreur est survenue",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -110,18 +132,30 @@ const Register = () => {
       
       toast({
         title: "✅ Compte créé avec succès !",
-        description: "Secteur Commerce sélectionné par défaut.",
+        description: "Secteur Commerce sélectionné par défaut. Mode démo activé.",
       });
       
-      navigate('/dashboard?secteur=commerce');
+      navigate('/dashboard?secteur=commerce&demo=true');
       
     } catch (error) {
       console.error('Erreur inscription:', error);
-      toast({
-        title: "❌ Erreur lors de l'inscription",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
-        variant: "destructive"
-      });
+      if (error instanceof Error && (
+        error.message.includes('Base de données non configurée') ||
+        error.message.includes('over_email_send_rate_limit') ||
+        error.message.includes('For security purposes')
+      )) {
+        toast({
+          title: "🔄 Mode démo activé",
+          description: "L'application fonctionne en mode démo avec votre API WhatsApp.",
+        });
+        navigate('/dashboard?secteur=commerce&demo=true');
+      } else {
+        toast({
+          title: "❌ Erreur lors de l'inscription",
+          description: error instanceof Error ? error.message : "Une erreur est survenue",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

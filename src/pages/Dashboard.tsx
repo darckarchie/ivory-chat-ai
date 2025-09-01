@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useUserStore, BusinessSector } from '@/lib/store';
-import { useDemoData } from '@/lib/hooks/use-demo-data';
-import { useLiveFeed } from '@/lib/hooks/use-live-feed';
+import { useMetrics } from '@/components/dashboard/MetricsProvider';
 import { getSectorFromString } from '@/lib/utils/sector-config';
 import { SectorId, KBItem } from '@/lib/types';
 import { motion } from "framer-motion";
@@ -13,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { AddItemModal } from '@/components/knowledge-base/AddItemModal';
 import { QuickMetrics } from '@/components/dashboard/QuickMetrics';
 import { ConversationsList } from '@/components/dashboard/ConversationsList';
+import { whatsappMetricsAdapter } from '@/lib/services/whatsapp-metrics-adapter';
 import { 
   ShoppingCart, 
   TrendingUp, 
@@ -33,11 +33,13 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const isAuthenticated = useUserStore(state => state.isAuthenticated());
   const user = useUserStore(state => state.user);
+  const { metrics, loading, error, isConnected, hasWaitingMessages, getWaitingCount } = useMetrics();
   
   const [sector, setSector] = useState<SectorId>('commerce');
   const [kbItems, setKbItems] = useState<KBItem[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState<KBItem | null>(null);
+  const [conversations, setConversations] = useState<any[]>([]);
 
   // Métriques de vente simulées (style Shopify)
   const [salesMetrics] = useState({
@@ -64,21 +66,35 @@ const Dashboard = () => {
     }
   }, [searchParams, user]);
 
-  const { isFirstVisit, demoItems } = useDemoData(sector);
-  const { messages } = useLiveFeed('demo');
+  // Charger les conversations depuis l'API
+  useEffect(() => {
+    const loadConversations = async () => {
+      try {
+        const convs = await whatsappMetricsAdapter.getConversationsForMessagesPage();
+        setConversations(convs);
+      } catch (error) {
+        console.warn('⚠️ API WhatsApp non disponible:', error);
+        setConversations([]);
+      }
+    };
+    
+    loadConversations();
+    
+    // Recharger toutes les 10 secondes
+    const interval = setInterval(loadConversations, 10000);
+    return () => clearInterval(interval);
+  }, []);
   
   useEffect(() => {
     const loadItems = async () => {
       const stored = localStorage.getItem('whalix_kb_items');
       if (stored) {
         setKbItems(JSON.parse(stored));
-      } else if (isFirstVisit && demoItems.length > 0) {
-        setKbItems(demoItems);
       }
     };
     
     loadItems();
-  }, [isFirstVisit, demoItems]);
+  }, []);
   
   const handleSaveItem = (itemData: Omit<KBItem, 'id' | 'business_id' | 'created_at' | 'updated_at'>) => {
     const now = new Date();
@@ -100,9 +116,23 @@ const Dashboard = () => {
         created_at: now,
         updated_at: now
       };
+      console.log('🔍 Chargement conversations dashboard...');
+      console.log('✅ Conversations chargées:', conversations);
       const updatedItems = [...kbItems, newItem];
       setKbItems(updatedItems);
-      localStorage.setItem('whalix_kb_items', JSON.stringify(updatedItems));
+      console.warn('⚠️ Erreur récupération conversations (ignorée):', error);
+      // Utiliser des conversations de démo en cas d'erreur
+      setConversations([
+        {
+          id: 'demo1',
+          customer: 'Client Démo',
+          customer_phone: '2250789123456',
+          last_message: 'Message de démonstration',
+          at: new Date().toISOString(),
+          status: 'waiting',
+          message_count: 1
+        }
+      ]);
     }
   };
   
@@ -119,23 +149,8 @@ const Dashboard = () => {
     return Math.round(((today - yesterday) / yesterday) * 100);
   };
 
-  const waitingMessages = messages.filter(m => m.status === 'waiting').length;
-  const whatsappConnected = true; // Simulé pour la démo
-
-  // Métriques pour le composant QuickMetrics
-  const dashboardMetrics = {
-    orders_today: salesMetrics.ordersToday,
-    reservations_today: 0,
-    quotes_today: 0,
-    messages_waiting: waitingMessages,
-    avg_response_min: 1.2,
-    revenue_today: salesMetrics.revenueToday,
-    vs_yesterday: {
-      orders: calculateTrend(salesMetrics.ordersToday, salesMetrics.ordersYesterday),
-      revenue: calculateTrend(salesMetrics.revenueToday, salesMetrics.revenueYesterday),
-      messages: 0
-    }
-  };
+  const waitingMessages = getWaitingCount();
+  const whatsappConnected = isConnected;
 
   return (
     <DashboardLayout 
@@ -143,6 +158,22 @@ const Dashboard = () => {
       whatsappConnected={whatsappConnected}
     >
       <div className="p-4 space-y-6">
+        {/* Indicateur API */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-yellow-50 border border-yellow-200 rounded-lg p-4"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-yellow-800">
+                API WhatsApp : {error}
+              </span>
+            </div>
+          </motion.div>
+        )}
+
         {/* Salutation avec CA du jour */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -155,16 +186,16 @@ const Dashboard = () => {
               Bonjour, {user.businessName} 👋
             </h2>
             <p className="text-white/90 text-lg">
-              CA aujourd'hui : <span className="font-bold">{formatCurrency(salesMetrics.revenueToday)}</span>
+              Messages aujourd'hui : <span className="font-bold">{metrics?.messages?.today || 0}</span>
             </p>
             <div className="flex items-center gap-4 mt-3">
               <div className="flex items-center gap-1 text-white/80 text-sm">
                 <TrendingUp className="h-4 w-4" />
-                <span>{salesMetrics.ordersToday} commandes</span>
+                <span>{metrics?.conversations?.active || 0} conversations</span>
               </div>
               <div className="flex items-center gap-1 text-white/80 text-sm">
                 <Target className="h-4 w-4" />
-                <span>{salesMetrics.conversionRate}% conversion</span>
+                <span>{metrics?.ai?.success_rate || 95}% IA</span>
               </div>
             </div>
           </div>
@@ -187,7 +218,7 @@ const Dashboard = () => {
                   <div>
                     <h3 className="font-semibold text-foreground">Assistant WhatsApp IA</h3>
                     <p className="text-sm text-muted-foreground">
-                      {whatsappConnected ? 'Actif 24/7 - Répond automatiquement' : 'Activez votre IA en 2 clics'}
+                      {whatsappConnected ? `Actif - ${metrics?.whatsapp?.phoneNumber || 'Connecté'}` : 'Activez votre IA en 2 clics'}
                     </p>
                   </div>
                 </div>
@@ -209,7 +240,7 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <QuickMetrics metrics={dashboardMetrics} sector={sector} />
+          <QuickMetrics metrics={metrics} sector={sector} />
         </motion.div>
 
         {/* 5 Dernières Conversations */}
@@ -219,7 +250,7 @@ const Dashboard = () => {
           transition={{ delay: 0.3 }}
         >
           <ConversationsList 
-            messages={messages.slice(0, 5)} 
+            messages={conversations.slice(0, 5)} 
             onOpenChat={(chatId) => navigate('/dashboard/conversations')}
           />
         </motion.div>
@@ -320,21 +351,21 @@ const Dashboard = () => {
           <Card>
             <CardContent className="p-4 text-center">
               <User className="h-6 w-6 text-primary mx-auto mb-2" />
-              <p className="text-xl font-bold text-foreground">284</p>
+              <p className="text-xl font-bold text-foreground">{metrics?.customers?.total || 0}</p>
               <p className="text-xs text-muted-foreground">Clients totaux</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Calendar className="h-6 w-6 text-accent mx-auto mb-2" />
-              <p className="text-xl font-bold text-foreground">15</p>
+              <p className="text-xl font-bold text-foreground">{metrics?.customers?.new_today || 0}</p>
               <p className="text-xs text-muted-foreground">Nouveaux clients</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Target className="h-6 w-6 text-success mx-auto mb-2" />
-              <p className="text-xl font-bold text-foreground">68%</p>
+              <p className="text-xl font-bold text-foreground">{metrics?.ai?.success_rate || 95}%</p>
               <p className="text-xs text-muted-foreground">Taux fidélité</p>
             </CardContent>
           </Card>
