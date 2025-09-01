@@ -115,8 +115,8 @@ const Dashboard = () => {
         ...itemData,
         created_at: now,
         updated_at: now
-      console.log('🔍 Chargement conversations dashboard...');
       };
+      console.log('🔍 Chargement conversations dashboard...');
       console.log('✅ Conversations chargées:', conversations);
       const updatedItems = [...kbItems, newItem];
       setKbItems(updatedItems);
