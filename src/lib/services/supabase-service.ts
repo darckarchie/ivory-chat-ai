@@ -31,7 +31,7 @@ export function normalizeCIPhone(input10: string): string {
 
 // Mode démo - données simulées
 const DEMO_TENANT = {
-  id: 'demo-tenant-id',
+  id: '00000000-0000-0000-0000-000000000001',
   name: 'Entreprise Démo',
   business_sector: 'commerce' as const,
   phone: '+22501234567',
@@ -40,8 +40,8 @@ const DEMO_TENANT = {
 };
 
 const DEMO_USER = {
-  id: 'demo-user-id',
-  tenant_id: 'demo-tenant-id',
+  id: '00000000-0000-0000-0000-000000000002',
+  tenant_id: '00000000-0000-0000-0000-000000000001',
   first_name: 'Utilisateur',
   last_name: 'Démo',
   phone: '+22501234567',
