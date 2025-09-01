@@ -388,12 +388,17 @@ class SupabaseService {
     });
     
     // 4. Logger l'événement
-    await this.logEvent({
-      tenant_id: tenant.id,
-      user_id: authData.user.id,
-      type: 'user_login',
-      payload: { signup: true, business_sector: userData.business_sector }
-    });
+    try {
+      await this.logEvent({
+        tenant_id: tenant.id,
+        user_id: authData.user.id,
+        type: 'user_login',
+        payload: { signup: true, business_sector: userData.business_sector }
+      });
+    } catch (logError) {
+      // Ignorer les erreurs de log pour ne pas bloquer l'inscription
+      console.warn('Erreur log événement (ignorée):', logError);
+    }
     
     return { user: authData.user, tenant, profile: user };
   }
