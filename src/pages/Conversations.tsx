@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { useMetrics } from '@/components/dashboard/MetricsProvider';
-import { whatsappMetricsAdapter } from '@/lib/services/whatsapp-metrics-adapter';
+import { useLiveFeed } from '@/lib/hooks/use-live-feed';
 import { Search, Filter, Clock, CheckCircle, User, Phone, MessageCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,31 +10,11 @@ import { motion } from 'framer-motion';
 
 const Conversations = () => {
   const navigate = useNavigate();
-  const { metrics, getWaitingCount } = useMetrics();
-  const [conversations, setConversations] = useState<any[]>([]);
+  const { messages } = useLiveFeed('demo');
   const [filter, setFilter] = useState('all'); // all, pending, replied
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Charger les conversations depuis l'API
-  useEffect(() => {
-    const loadConversations = async () => {
-      try {
-        const convs = await whatsappMetricsAdapter.getConversationsForMessagesPage();
-        setConversations(convs);
-      } catch (error) {
-        console.error('Erreur chargement conversations:', error);
-        setConversations([]);
-      }
-    };
-    
-    loadConversations();
-    
-    // Recharger toutes les 10 secondes
-    const interval = setInterval(loadConversations, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const filteredConversations = conversations.filter(conv => {
+  const filteredConversations = messages.filter(conv => {
     if (filter === 'pending' && conv.status !== 'waiting') return false;
     if (filter === 'replied' && conv.status === 'waiting') return false;
     if (searchQuery && !conv.last_message.toLowerCase().includes(searchQuery.toLowerCase()) && 
@@ -43,13 +22,13 @@ const Conversations = () => {
     return true;
   });
 
-  const waitingCount = conversations.filter(m => m.status === 'waiting').length;
-  const repliedCount = conversations.filter(m => m.status !== 'waiting').length;
+  const waitingCount = messages.filter(m => m.status === 'waiting').length;
+  const repliedCount = messages.filter(m => m.status !== 'waiting').length;
 
   return (
     <DashboardLayout 
       waitingMessages={waitingCount}
-      whatsappConnected={metrics?.whatsapp?.isConnected || false}
+      whatsappConnected={true}
     >
       <div className="h-full flex flex-col">
         {/* Header avec recherche */}
@@ -73,7 +52,7 @@ const Conversations = () => {
               active={filter === 'all'}
               onClick={() => setFilter('all')}
               label="Tous"
-              count={conversations.length}
+              count={messages.length}
             />
             <FilterTab
               active={filter === 'pending'}
