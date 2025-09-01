@@ -46,7 +46,7 @@ export function MetricsProvider({ children }: { children: React.ReactNode }) {
         setTimeout(loadMetrics, 1000);
       }
     } catch (error) {
-      console.error('Erreur log événement:', error);
+      console.warn('🔄 Mode démo - Événement ignoré:', error);
     }
   };
 
