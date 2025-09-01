@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { SectorId } from "@/lib/types";
+import { DashboardMetrics, SectorId } from "@/lib/types";
 import { getConfig } from "@/lib/utils/sector-config";
 import { 
   ShoppingCart, 
@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 interface QuickMetricsProps {
-  metrics: any; // Métriques depuis l'API WhatsApp
+  metrics: DashboardMetrics;
   sector: SectorId;
 }
 
@@ -27,16 +27,16 @@ export function QuickMetrics({ metrics, sector }: QuickMetricsProps) {
       {
         id: 'primary',
         title: config.primaryLabel,
-        value: metrics?.conversations?.new_today || 0,
+        value: metrics[config.primaryMetric as keyof DashboardMetrics] as number,
         icon: ShoppingCart,
         color: 'text-green-600',
         bgColor: 'bg-green-50',
-        change: undefined // Pas de données de tendance pour l'instant
+        change: metrics.vs_yesterday?.orders
       },
       {
         id: 'secondary', 
         title: config.secondaryLabel,
-        value: metrics?.customers?.total || 0,
+        value: metrics[config.secondaryMetric as keyof DashboardMetrics] as number,
         icon: Calendar,
         color: 'text-blue-600',
         bgColor: 'bg-blue-50'
@@ -44,19 +44,19 @@ export function QuickMetrics({ metrics, sector }: QuickMetricsProps) {
       {
         id: 'messages',
         title: 'Messages en attente',
-        value: metrics?.messages?.pending || 0,
+        value: metrics.messages_waiting,
         icon: MessageCircle,
-        color: (metrics?.messages?.pending || 0) > 0 ? 'text-red-600' : 'text-gray-600',
-        bgColor: (metrics?.messages?.pending || 0) > 0 ? 'bg-red-50' : 'bg-gray-50',
-        urgent: (metrics?.messages?.pending || 0) > 0
+        color: metrics.messages_waiting > 0 ? 'text-red-600' : 'text-gray-600',
+        bgColor: metrics.messages_waiting > 0 ? 'bg-red-50' : 'bg-gray-50',
+        urgent: metrics.messages_waiting > 0
       },
       {
         id: 'response',
         title: 'Temps de réponse',
-        value: `${metrics?.ai?.response_time || 2.1}s`,
+        value: `${Math.round(metrics.avg_response_min)}min`,
         icon: Clock,
-        color: (metrics?.ai?.response_time || 2.1) <= 3 ? 'text-green-600' : 'text-orange-600',
-        bgColor: (metrics?.ai?.response_time || 2.1) <= 3 ? 'bg-green-50' : 'bg-orange-50'
+        color: metrics.avg_response_min <= 5 ? 'text-green-600' : 'text-orange-600',
+        bgColor: metrics.avg_response_min <= 5 ? 'bg-green-50' : 'bg-orange-50'
       }
     ];
 
